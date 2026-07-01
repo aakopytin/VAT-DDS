@@ -1,5 +1,5 @@
 module.exports.config = { api: { bodyParser: false } };
- 
+
 function readBody(req) {
 return new Promise(function(resolve) {
 var d = '';
@@ -8,7 +8,7 @@ req.on('end', function() { resolve(d); });
 req.on('error',function() { resolve(''); });
 });
 }
- 
+
 function parseForm(body) {
 var r = {};
 if (!body) return r;
@@ -20,12 +20,12 @@ decodeURIComponent(pair.slice(i+1).replace(/\+/g,' '));
 });
 return r;
 }
- 
+
 module.exports = async function handler(req, res) {
 res.setHeader('X-Frame-Options', 'ALLOWALL');
 res.setHeader('Content-Security-Policy', "frame-ancestors *");
 res.setHeader('Content-Type', 'text/html; charset=utf-8');
- 
+
 if (req.method === 'POST') {
 var raw = await readBody(req);
 var fields = parseForm(raw);
@@ -35,20 +35,16 @@ var accessToken = fields['auth[access_token]'] || '';
 console.log('[DDS] POST | domain:', domain, '| account:', accountId, '| hasToken:', !!accessToken);
 return res.status(200).send(html(domain, accountId, accessToken));
 }
- 
+
 return res.status(200).send('<html><body style="font-family:sans-serif;padding:20px">' +
 '<h3>&#x2713; ДДС виджет работает</h3></body></html>');
 };
- 
+
 function esc(s) {
 return String(s||'').replace(/\\/g,'\\\\').replace(/`/g,'\\`').replace(/\$/g,'\\$');
 }
- 
+
 function html(domain, accountId, accessToken) {
-var now=new Date(),ny=now.getFullYear(),nm=now.getMonth(),nd=now.getDate();
-var npad=function(n){return n<10?"0"+n:""+n;};
-var defD0=ny+"-"+npad(nm+1)+"-01";
-var defD1=ny+"-"+npad(nm+1)+"-"+npad(nd);
 return `<!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -67,13 +63,13 @@ details table td{font-size:10px;color:#555;padding:2px 4px}
 </style>
 </head>
 <body>
-<div id="filters" style="display:flex;gap:6px;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #e5e7eb"><span style="font-size:11px;color:#6b7280">C</span><input type="date" id="d0" value="${defD0}" style="font-size:11px;border:1px solid #d1d5db;border-radius:3px;padding:2px 4px;color:#374151"><span style="font-size:11px;color:#6b7280">по</span><input type="date" id="d1" value="${defD1}" style="font-size:11px;border:1px solid #d1d5db;border-radius:3px;padding:2px 4px;color:#374151"></div>
+<div id="filters" style="display:flex;gap:6px;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #e5e7eb"><select id="qs" style="font-size:11px;border:1px solid #d1d5db;border-radius:3px;padding:2px 6px;color:#374151;background:#fff;cursor:pointer"></select></div>
 <div id="root" style="color:#9ca3af">ДДС — загрузка…</div>
 <script>
 var DOMAIN="${esc(domain)}";
 var ACCOUNT_ID="${esc(accountId)}";
 var TOKEN="${esc(accessToken)}";
- 
+
 var VSIP={2:1,4:1,5:1,6:1,7:1,8:1};
 var TT={18:1};
 var OFF={24:1,26:1};
@@ -107,33 +103,29 @@ var AC={
 "Услуги по сертификации":"svc",
 "Тесты и испытания":"svc","Банковские гарантии":"bg"
 };
- 
+
 function fmt(v){if(!v&&v!==0)return"—";if(v===0)return"—";return new Intl.NumberFormat("ru-RU",{minimumFractionDigits:2,maximumFractionDigits:2}).format(v);}
 function fmtI(v){return new Intl.NumberFormat("ru-RU",{minimumFractionDigits:0,maximumFractionDigits:0}).format(v||0);}
-function num(s){if(!s&&s!==0)return 0;return parseFloat(String(s).replace(/[^\\d.\\-]/g,""))||0;}
-function padZ(n){return n<10?"0"+n:""+n;}
+function num(s){if(!s&&s!==0)return 0;return parseFloat(String(s).replace(/[^\d.\-]/g,""))||0;}
 function getRange(){
-var d0el=document.getElementById("d0"),d1el=document.getElementById("d1");
-var now=new Date(),y=now.getFullYear(),m=now.getMonth();
-var end=Math.min(now.getDate(),new Date(y,m+1,0).getDate());
-var defS0=y+"-"+padZ(m+1)+"-01";
-var defS1=y+"-"+padZ(m+1)+"-"+padZ(end);
-var s0=(d0el&&d0el.value)||defS0;
-var s1=(d1el&&d1el.value)||defS1;
-var pts0=s0.split("-"),pts1=s1.split("-");
-var d0=padZ(parseInt(pts0[2],10))+"."+padZ(parseInt(pts0[1],10))+"."+pts0[0];
-var d1=padZ(parseInt(pts1[2],10))+"."+padZ(parseInt(pts1[1],10))+"."+pts1[0];
+var qs=document.getElementById("qs");
+var val=qs?qs.value:"";
+var now=new Date(),y=now.getFullYear(),q=Math.ceil((now.getMonth()+1)/3);
+if(val){var pts=val.split(":");y=parseInt(pts[0],10);q=parseInt(pts[1],10);}
+var s0=[y+"-01-01",y+"-04-01",y+"-07-01",y+"-10-01"][q-1];
+var s1=[y+"-03-31",y+"-06-30",y+"-09-30",y+"-12-31"][q-1];
+var label="К"+q+" "+y;
+var d0=s0.slice(8)+"."+s0.slice(5,7)+"."+s0.slice(0,4);
+var d1=s1.slice(8)+"."+s1.slice(5,7)+"."+s1.slice(0,4);
 var ymd=s0.slice(0,7);
-var mo=["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
-var label=s0.slice(0,7)===s1.slice(0,7)?mo[parseInt(pts0[1],10)-1]+" "+pts0[0]:d0+" — "+d1;
 return{ymd:ymd,s0:s0,s1:s1,d0:d0,d1:d1,label:label};
 }
- 
+
 var lk=function(ym){return"dds_"+ACCOUNT_ID+"_"+ym;};
 function getF(ym){try{var s=localStorage.getItem(lk(ym));return s?JSON.parse(s):null;}catch(e){return null;}}
 function setF(ym,v,t){try{localStorage.setItem(lk(ym),JSON.stringify({v:v,t:t}));}catch(e){}}
 function clrF(ym){try{localStorage.removeItem(lk(ym));}catch(e){}}
- 
+
 function loadAll(entity) {
 return fetch("/api/data", {
 method: "POST",
@@ -145,11 +137,11 @@ return r.ok ? r.json() : Promise.reject("HTTP " + r.status);
 return d.items || [];
 });
 }
- 
+
 function calc(txMonth,txAll,cats,rng){
 var cMap={};
 cats.forEach(function(c){cMap[c.id]=c.name||"";});
- 
+
 var vEnd=0, tEnd=0;
 txAll.forEach(function(tx){
 if(!tx.date||tx.date>rng.s1)return;
@@ -158,10 +150,10 @@ var inc=num(tx.income)||0, out=num(tx.outcome)||0;
 if(VSIP[aid]){vEnd+=inc-out;}
 if(TT[aid])  {tEnd+=inc-out;}
 });
- 
+
 var pr=0,zp=0,km=0,bk=0,ins=0,lz=0,ar=0,buh=0,ntax=0,po=0,pct=0,bg=0,poIn=0,pjIn=0,pjOut=0,refund=0,trIn=0,trOut=0,skIn=0,skOut=0;
 var piP={},poP={},poDet=[],vNet=0,tNet=0;
- 
+
 txMonth.forEach(function(tx){
 var aid=tx.org_account_id,cn=cMap[tx.category_id]||"";
 var pid=tx.project_id||0;
@@ -199,7 +191,7 @@ else if(cat==="skOut")skOut+=out;
 else if(!pOff){pjOut+=out;if(gp&&pOk)poP[gp]=(poP[gp]||0)+out;}
 }
 });
- 
+
 var vSt=0, tSt=0;
 txAll.forEach(function(tx){
 if(!tx.date||tx.date>=rng.s0)return;
@@ -208,17 +200,17 @@ var inc=num(tx.income)||0, out=num(tx.outcome)||0;
 if(VSIP[aid]){vSt+=inc-out;}
 if(TT[aid])  {tSt+=inc-out;}
 });
- 
+
 var te=pjOut+zp+km+bk+ins+lz+ar+buh+ntax+po+pct+bg;
 return{vSt:vSt,tSt:tSt,vEnd:vEnd,tEnd:tEnd,tS:vSt+tSt,tE:(vEnd||0)+(tEnd||0),
 pr:pr,pjIn:pjIn,refund:refund,poIn:poIn,pjOut:pjOut,zp:zp,km:km,bk:bk,ins:ins,lz:lz,ar:ar,buh:buh,ntax:ntax,po:po,pct:pct,bg:bg,te:te,trIn:trIn,trOut:trOut,skIn:skIn,skOut:skOut,
 piP:piP,poP:poP,poDet:poDet,cnt:txMonth.length,d0:rng.d0,d1:rng.d1,label:rng.label,ymd:rng.ymd};
 }
- 
+
 function TR(l,v,cls,ind){var n=fmt(v),c="";if(cls==="g"&&v>0)c="color:#16a34a";if(cls==="r"&&v<0)c="color:#dc2626";if(cls==="m")c="color:#9ca3af";var s1="padding:4px 6px"+(ind?";padding-left:14px":"");var s2="padding:4px 6px;text-align:right;white-space:nowrap"+(c?";"+c:"");return"<tr><td style='"+s1+"'>"+l+"</td><td style='"+s2+"'>"+n+"</td></tr>";}
 function SEP(l,v,cls){var n=fmt(v),c="";if(cls==="g"&&v>0)c="color:#16a34a";if(cls==="r"&&v<0)c="color:#dc2626";var s="padding:4px 6px;font-weight:600;border-top:1px solid #e5e7eb";return"<tr><td style='"+s+"'>"+l+"</td><td style='"+s+";text-align:right;white-space:nowrap"+(c?";"+c:"")+"'>"+n+"</td></tr>";}
 function SEC(l){return"<tr><td colspan='2' style='padding:7px 6px 2px;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;border-top:1px solid #e5e7eb'>"+l+"</td></tr>";}
- 
+
 function render(r,live){
 var rows=[],tot=0;
 rows.push(TR("Остаток "+r.d0+" · ВСИП",r.vSt,"",""));
@@ -279,7 +271,7 @@ return'<div style="display:flex;align-items:flex-start;justify-content:space-bet
 +'<table>'+rows.join('')+'</table>'
 +'<div style="margin-top:5px;font-size:10px;color:#9ca3af">обновлено: '+new Date().toLocaleTimeString("ru-RU")+'</div>';
 }
- 
+
 function renderPoDet(poDet){
 if(!poDet||!poDet.length)return;
 var d=document.createElement("details"),s=document.createElement("summary");
@@ -294,13 +286,13 @@ t.appendChild(tr);
 });
 d.appendChild(t);document.getElementById("root").appendChild(d);
 }
- 
+
 function load(reset){
 var el=document.getElementById("root"),rng=getRange();
 if(reset)clrF(rng.ymd);
 var s=document.getElementById("st");
 if(s){s.textContent="загрузка…";s.style.color="#9ca3af";}
- 
+
 Promise.all([
 loadAll("transaction"),
 loadAll("categories")
@@ -329,16 +321,22 @@ el.innerHTML="<div style='padding:12px;color:#dc2626'>Ошибка: "+e+"</div>"
 console.error("[DDS]",e);
 });
 }
- 
+
 (function(){
-var now=new Date(),y=now.getFullYear(),m=now.getMonth();
-var end=Math.min(now.getDate(),new Date(y,m+1,0).getDate());
-var pad=function(n){return n<10?"0"+n:""+n;};
-var d0el=document.getElementById("d0"),d1el=document.getElementById("d1");
-if(d0el){d0el.value=y+"-"+pad(m+1)+"-01";d0el.addEventListener("change",function(){load(false);});}
-if(d1el){d1el.value=y+"-"+pad(m+1)+"-"+pad(end);d1el.addEventListener("change",function(){load(false);});}
+var now=new Date(),cY=now.getFullYear(),cQ=Math.ceil((now.getMonth()+1)/3);
+var qs=document.getElementById("qs");
+for(var y=cY;y>=cY-1;y--){
+for(var q=4;q>=1;q--){
+if(y===cY&&q>cQ)continue;
+var o=document.createElement("option");
+o.value=y+":"+q;o.textContent="К"+q+" "+y;
+if(y===cY&&q===cQ)o.selected=true;
+qs.appendChild(o);
+}
+}
+qs.addEventListener("change",function(){load(false);});
 })();
- 
+
 load(false);
 setInterval(function(){load(false);},5*60*1000);
 console.log("[DDS] started | domain:",DOMAIN,"| token:",!!TOKEN);
