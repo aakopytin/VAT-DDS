@@ -32,8 +32,9 @@ var fields = parseForm(raw);
 var domain = fields['domain'] || '';
 var accountId = fields['account[id]'] || '';
 var accessToken = fields['auth[access_token]'] || '';
-console.log('[DDS] POST | domain:', domain, '| account:', accountId, '| hasToken:', !!accessToken);
-return res.status(200).send(html(domain, accountId, accessToken));
+var vercelHost = req.headers['host'] || '';
+console.log('[DDS] POST | domain:', domain, '| account:', accountId, '| hasToken:', !!accessToken, '| host:', vercelHost);
+return res.status(200).send(html(domain, accountId, accessToken, vercelHost));
 }
 
 return res.status(200).send('<html><body style="font-family:sans-serif;padding:20px">' +
@@ -44,7 +45,7 @@ function esc(s) {
 return String(s||'').replace(/\\/g,'\\\\').replace(/`/g,'\\`').replace(/\$/g,'\\$');
 }
 
-function html(domain, accountId, accessToken) {
+function html(domain, accountId, accessToken, vercelHost) {
 return `<!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -69,6 +70,8 @@ details table td{font-size:10px;color:#555;padding:2px 4px}
 var DOMAIN="${esc(domain)}";
 var ACCOUNT_ID="${esc(accountId)}";
 var TOKEN="${esc(accessToken)}";
+var API_BASE="${esc(vercelHost)}"?"https://${esc(vercelHost)}":(location.origin||"");
+
 
 var VSIP={2:1,4:1,5:1,6:1,7:1,8:1};
 var TT={18:1};
@@ -131,7 +134,7 @@ var all=[], page=1;
 function next(){
 var p=new URLSearchParams(extra||{});
 p.set('entity',entity);p.set('limit','100');p.set('page',String(page));
-return fetch('/api/data?'+p.toString()).then(function(r){
+return fetch(API_BASE+'/api/data?'+p.toString()).then(function(r){
 if(!r.ok)throw new Error('HTTP '+r.status);
 return r.json();
 }).then(function(d){
