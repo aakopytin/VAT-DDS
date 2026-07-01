@@ -1,10 +1,22 @@
 // Proxy to Aspro Cloud API — server-side pagination
 // Env vars: ASPRO_API_KEY
-// Domain is passed in request body (sent by Aspro widget POST)
+// Domain is passed in request body (sent by client JS as JSON POST)
 
 const https = require('https');
 
 const ALLOWED = ['plan_money', 'transaction', 'categories', 'transaction_pls'];
+
+function readJsonBody(req) {
+  return new Promise(function(resolve) {
+    var d = '';
+    req.on('data', function(c) { d += c.toString(); });
+    req.on('end', function() {
+      try { resolve(JSON.parse(d)); }
+      catch(e) { resolve({}); }
+    });
+    req.on('error', function() { resolve({}); });
+  });
+}
 
 function httpsGet(url) {
   return new Promise(function(resolve, reject) {
@@ -38,10 +50,14 @@ module.exports = async function handler(req, res) {
     return res.end(JSON.stringify({ error: 'ASPRO_API_KEY not set' }));
   }
 
-  const { domain, entity } = req.body || {};
+  // Read body manually — req.body is not auto-parsed in non-Next.js Vercel functions
+  const body = await readJsonBody(req);
+  const domain = body.domain;
+  const entity = body.entity;
+
   if (!domain || !entity) {
     res.statusCode = 400;
-    return res.end(JSON.stringify({ error: 'Missing domain or entity' }));
+    return res.end(JSON.stringify({ error: 'Missing domain or entity', got: { domain: !!domain, entity: !!entity } }));
   }
 
   if (!ALLOWED.includes(entity)) {
