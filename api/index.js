@@ -128,24 +128,18 @@ function getF(ym){try{var s=localStorage.getItem(lk(ym));return s?JSON.parse(s):
 function setF(ym,v,t){try{localStorage.setItem(lk(ym),JSON.stringify({v:v,t:t}));}catch(e){}}
 function clrF(ym){try{localStorage.removeItem(lk(ym));}catch(e){}}
 
-function loadAll(entity, extra) {
-var all=[], page=1;
-function next(){
-var p=new URLSearchParams(extra||{});
-p.set('entity',entity);p.set('limit','100');p.set('page',String(page));
-return fetch(API_BASE+'/api/data?'+p.toString()).then(function(r){
+function loadAll(entity) {
+return fetch(API_BASE+'/api/data',{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({domain:DOMAIN,entity:entity})
+}).then(function(r){
 if(!r.ok)throw new Error('HTTP '+r.status);
 return r.json();
 }).then(function(d){
 if(d.error)throw new Error(JSON.stringify(d.error));
-var items=(d.response&&d.response.items)||[];
-var total=(d.response&&d.response.total)||0;
-all=all.concat(items);
-if(all.length>=total||items.length===0)return all;
-page++;return next();
+return d.items||[];
 });
-}
-return next();
 }
 
 function calc(txMonth,txAll,cats,rng){
