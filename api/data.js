@@ -5,6 +5,7 @@
 const https = require('https');
 
 const ALLOWED = ['plan_money', 'transaction', 'categories', 'transaction_pls'];
+const PAGE_SIZE = 100;
 
 function readJsonBody(req) {
   return new Promise(function(resolve) {
@@ -50,7 +51,7 @@ module.exports = async function handler(req, res) {
     return res.end(JSON.stringify({ error: 'ASPRO_API_KEY not set' }));
   }
 
-  // Read body manually — req.body is not auto-parsed in non-Next.js Vercel functions
+  // Read body manually — req.body is not auto-parsed in plain Vercel functions
   const body = await readJsonBody(req);
   const domain = body.domain;
   const entity = body.entity;
@@ -67,26 +68,28 @@ module.exports = async function handler(req, res) {
 
   const cleanDomain = domain.replace(/^https?:\/\//i, '').replace(/\/+$/, '');
   const base = 'https://' + cleanDomain + '/api/v1/module/fin/' + entity + '/list'
-    + '?api_key=' + encodeURIComponent(apiKey) + '&count=50';
+    + '?api_key=' + encodeURIComponent(apiKey) + '&limit=' + PAGE_SIZE;
 
   try {
     const d0 = await httpsGet(base + '&page=1');
     const firstItems = (d0.response && d0.response.items) || [];
     const total = (d0.response && d0.response.total) || 0;
-    const totalPages = Math.ceil(total / 50);
 
-    if (totalPages <= 1) {
-      return res.end(JSON.stringify({ items: firstItems }));
+    if (firstItems.length === 0 || total <= PAGE_SIZE) {
+      return res.end(JSON.stringify({ items: firstItems, total: total }));
     }
 
+    const totalPages = Math.ceil(total / PAGE_SIZE);
     const allItems = [...firstItems];
+
     for (let page = 2; page <= Math.min(totalPages, 60); page++) {
       const d = await httpsGet(base + '&page=' + page);
       const items = (d.response && d.response.items) || [];
+      if (items.length === 0) break;
       allItems.push(...items);
     }
 
-    return res.end(JSON.stringify({ items: allItems }));
+    return res.end(JSON.stringify({ items: allItems, total: total }));
   } catch (err) {
     res.statusCode = 502;
     return res.end(JSON.stringify({ error: err.message }));
