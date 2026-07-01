@@ -41,28 +41,39 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'OPTIONS') { res.statusCode = 204; return res.end(); }
 
-  // GET diagnostic: /api/data?_test=1&domain=2cec.aspro.cloud
+  // GET diagnostic — fetch with ?domain=2cec.aspro.cloud to test Aspro connectivity
   if (req.method === 'GET') {
-    const qs = new URLSearchParams((req.url || '').split('?')[1] || '');
     const apiKey = process.env.ASPRO_API_KEY;
-    const result = { keySet: !!apiKey, keyLen: apiKey ? apiKey.length : 0 };
-    const domain = qs.get('domain') || '';
-    if (domain) {
-      if (domain) {
-        const testUrl = 'https://' + domain + '/api/v1/module/fin/categories/list?api_key=' + encodeURIComponent(apiKey || '') + '&limit=5&page=1';
-        result.testUrl = testUrl.replace(encodeURIComponent(apiKey || ''), '[KEY]');
-        try {
-          const d = await httpsGet(testUrl);
-          result.asproStatus = 'ok';
-          result.total = d.response && d.response.total;
-          result.itemsOnPage1 = d.response && d.response.items && d.response.items.length;
-          result.rawKeys = d ? Object.keys(d) : [];
-        } catch(e) {
-          result.asproStatus = 'error';
-          result.asproError = e.message;
-        }
+    // Vercel populates req.query for serverless functions
+    const qObj = req.query || {};
+    const rawUrl = req.url || '';
+    // fallback: parse from URL
+    const urlQs = new URLSearchParams(rawUrl.includes('?') ? rawUrl.split('?')[1] : '');
+    const domain = qObj.domain || urlQs.get('domain') || '';
+
+    const result = {
+      keySet: !!apiKey,
+      keyLen: apiKey ? apiKey.length : 0,
+      reqUrl: rawUrl,
+      domain: domain
+    };
+
+    if (domain && apiKey) {
+      const testUrl = 'https://' + domain.replace(/^https?:\/\//i,'').replace(/\/+$/,'')
+        + '/api/v1/module/fin/categories/list?api_key=' + encodeURIComponent(apiKey) + '&limit=5&page=1';
+      result.testUrl = testUrl.replace(encodeURIComponent(apiKey), '[KEY]');
+      try {
+        const d = await httpsGet(testUrl);
+        result.asproStatus = 'ok';
+        result.responseKeys = d ? Object.keys(d) : [];
+        result.total = d.response && d.response.total;
+        result.itemsOnPage1 = d.response && d.response.items ? d.response.items.length : null;
+      } catch(e) {
+        result.asproStatus = 'error';
+        result.asproError = e.message;
       }
     }
+
     return res.end(JSON.stringify(result));
   }
 
