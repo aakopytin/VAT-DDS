@@ -310,18 +310,24 @@ var r=calc(txM,txAll,cats,rng);
 el.innerHTML=render(r,true);
 renderPoDet(r.poDet);
 }else{
-el.innerHTML="<div style='padding:12px;font-size:11px;color:#666'>"
-+"Нет данных за "+rng.label+"<br>"
-+"tx всего: "+txAll.length+", за период: "+txM.length+"<br>"
+el.innerHTML="<div style='padding:12px;font-size:11px;color:#444'>"
++"<b>Нет транзакций за "+rng.label+"</b><br><br>"
++"tx всего: <b>"+txAll.length+"</b>, за период: <b>"+txM.length+"</b><br>"
++"categories: <b>"+cats.length+"</b><br>"
 +"диапазон: "+rng.s0+" — "+rng.s1+"<br>"
 +"domain: "+DOMAIN+"<br>"
-+"token: "+(TOKEN?TOKEN.slice(0,20)+"...":"нет")
++"API_BASE: "+API_BASE+"<br>"
++"sample account_id: "+(txAll[0]?txAll[0].org_account_id:"нет данных")
 +"</div>";
 }
 var b=document.getElementById("btn");if(b)b.onclick=function(){load(false);};
 var rb=document.getElementById("rst");if(rb)rb.onclick=function(){load(true);};
 }).catch(function(e){
-el.innerHTML="<div style='padding:12px;color:#dc2626'>Ошибка: "+e+"</div>";
+el.innerHTML="<div style='padding:12px;color:#dc2626;font-size:11px'>"
++"<b>Ошибка загрузки данных:</b><br>"+e+"<br><br>"
++"domain: "+DOMAIN+"<br>"
++"API_BASE: "+API_BASE
++"</div>";
 console.error("[DDS]",e);
 });
 }
