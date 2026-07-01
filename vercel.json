@@ -1,16 +1,7 @@
 {
   "routes": [
-    {
-      "src": "/api/data",
-      "dest": "/api/data.js"
-    },
-    {
-      "src": "/api/dds",
-      "dest": "/api/index.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/api/nds.js"
-    }
+    { "src": "/api/data",  "dest": "/api/data.js"  },
+    { "src": "/api/dds",   "dest": "/api/index.js" },
+    { "src": "/api/index", "dest": "/api/index.js" }
   ]
 }
