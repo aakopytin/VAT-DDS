@@ -1,17 +1,16 @@
 {
-  "version": 2,
-  "rewrites": [
+  "routes": [
     {
-      "source": "/",
-      "destination": "/api/index"
-    }
-  ],
-  "functions": {
-    "api/data.js": {
-      "maxDuration": 60
+      "src": "/api/data",
+      "dest": "/api/data.js"
     },
-    "api/index.js": {
-      "maxDuration": 60
+    {
+      "src": "/api/dds",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/nds.js"
     }
-  }
+  ]
 }
