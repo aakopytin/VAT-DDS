@@ -141,7 +141,7 @@ if(d.error)throw new Error(JSON.stringify(d.error));
 var items=(d.response&&d.response.items)||[];
 var total=(d.response&&d.response.total)||0;
 all=all.concat(items);
-if(all.length>=total||items.length<100)return all;
+if(all.length>=total||items.length===0)return all;
 page++;return next();
 });
 }
@@ -334,13 +334,19 @@ console.error("[DDS]",e);
 
 (function(){
 var now=new Date(),cY=now.getFullYear(),cQ=Math.ceil((now.getMonth()+1)/3);
+// Default to previous quarter in first 7 days of a new quarter (data not yet accumulated)
+var defY=cY,defQ=cQ;
+var qFirstMonths=[0,3,6,9];
+if(qFirstMonths.indexOf(now.getMonth())>=0&&now.getDate()<=7){
+  defQ=cQ-1;if(defQ===0){defQ=4;defY=cY-1;}
+}
 var qs=document.getElementById("qs");
 for(var y=cY;y>=cY-1;y--){
 for(var q=4;q>=1;q--){
 if(y===cY&&q>cQ)continue;
 var o=document.createElement("option");
 o.value=y+":"+q;o.textContent="К"+q+" "+y;
-if(y===cY&&q===cQ)o.selected=true;
+if(y===defY&&q===defQ)o.selected=true;
 qs.appendChild(o);
 }
 }
