@@ -34,12 +34,38 @@ function httpsGet(url) {
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
 
   if (req.method === 'OPTIONS') { res.statusCode = 204; return res.end(); }
+
+  // GET diagnostic: /api/data?_test=1&domain=2cec.aspro.cloud
+  if (req.method === 'GET') {
+    const qs = new URLSearchParams((req.url || '').split('?')[1] || '');
+    const apiKey = process.env.ASPRO_API_KEY;
+    const result = { keySet: !!apiKey, keyLen: apiKey ? apiKey.length : 0 };
+    if (qs.get('_test') === '1') {
+      const domain = qs.get('domain') || '';
+      if (domain) {
+        const testUrl = 'https://' + domain + '/api/v1/module/fin/categories/list?api_key=' + encodeURIComponent(apiKey || '') + '&limit=5&page=1';
+        result.testUrl = testUrl.replace(encodeURIComponent(apiKey || ''), '[KEY]');
+        try {
+          const d = await httpsGet(testUrl);
+          result.asproStatus = 'ok';
+          result.total = d.response && d.response.total;
+          result.itemsOnPage1 = d.response && d.response.items && d.response.items.length;
+          result.rawKeys = d ? Object.keys(d) : [];
+        } catch(e) {
+          result.asproStatus = 'error';
+          result.asproError = e.message;
+        }
+      }
+    }
+    return res.end(JSON.stringify(result));
+  }
+
   if (req.method !== 'POST') {
     res.statusCode = 405;
     return res.end(JSON.stringify({ error: 'Method not allowed' }));
