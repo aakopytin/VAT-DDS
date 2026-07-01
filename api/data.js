@@ -109,8 +109,13 @@ module.exports = async function handler(req, res) {
 
   try {
     const d0 = await httpsGet(base + '&page=1');
-    const firstItems = (d0.response && d0.response.items) || [];
-    const total = (d0.response && d0.response.total) || 0;
+    // If Aspro returns unexpected structure, expose it for debugging
+    if (!d0.response) {
+      res.statusCode = 502;
+      return res.end(JSON.stringify({ error: 'unexpected_aspro_response', raw: d0 }));
+    }
+    const firstItems = d0.response.items || [];
+    const total = d0.response.total || 0;
 
     if (firstItems.length === 0 || total <= PAGE_SIZE) {
       return res.end(JSON.stringify({ items: firstItems, total: total }));
