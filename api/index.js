@@ -280,105 +280,115 @@ cnt:txMonth.length,d0:rng.d0,d1:rng.d1,label:rng.label,ymd:rng.ymd
 };
 }
 
-// ── Table helpers (3-column) ──────────────────────────────────
+// ── Table helpers (4-column: label | ВСИП | ТТ | Итого) ──────
 var BDR="border-top:1px solid #e5e7eb";
 function cl(v,cls){return cls==="g"&&v>0?"color:#16a34a":cls==="r"&&v<0?"color:#dc2626":cls==="m"?"color:#9ca3af":"";}
-function TR3(l,v,t,vc,tc,ind){
+function TR4(l,v,t,vc,tc,ind){
+var tot=(v||0)+(t||0);
 var ls="padding:3px 5px"+(ind?";padding-left:13px":"");
-var vs="padding:3px 5px"+";text-align:right;white-space:nowrap"+(cl(v,vc)?";"+cl(v,vc):"");
-var ts="padding:3px 5px"+";text-align:right;white-space:nowrap"+(cl(t,tc)?";"+cl(t,tc):"");
-return"<tr><td style='"+ls+"'>"+l+"</td><td class='v' style='"+vs+"'>"+fmt(v)+"</td><td class='v' style='"+ts+"'>"+fmt(t)+"</td></tr>";
+var vs="padding:3px 5px;text-align:right;white-space:nowrap"+(cl(v,vc)?";"+cl(v,vc):"");
+var ts="padding:3px 5px;text-align:right;white-space:nowrap"+(cl(t,tc)?";"+cl(t,tc):"");
+var os="padding:3px 5px;text-align:right;white-space:nowrap;color:#6b7280";
+return"<tr><td style='"+ls+"'>"+l+"</td><td class='v' style='"+vs+"'>"+fmt(v)+"</td><td class='v' style='"+ts+"'>"+fmt(t)+"</td><td class='v' style='"+os+"'>"+fmt(tot)+"</td></tr>";
 }
-function SEP3(l,v,t,vc,tc){
+function SEP4(l,v,t,vc,tc){
+var tot=(v||0)+(t||0);
 var b=BDR+";padding:3px 5px;font-weight:600";
 var vs=b+";text-align:right;white-space:nowrap"+(cl(v,vc)?";"+cl(v,vc):"");
 var ts=b+";text-align:right;white-space:nowrap"+(cl(t,tc)?";"+cl(t,tc):"");
-return"<tr><td style='"+b+"'>"+l+"</td><td class='v' style='"+vs+"'>"+fmt(v)+"</td><td class='v' style='"+ts+"'>"+fmt(t)+"</td></tr>";
+var totCls=(vc==="g"||tc==="g")?(tot>0?"g":""):(vc==="r"||tc==="r")?(tot<0?"r":""):"";
+var os=b+";text-align:right;white-space:nowrap;color:#374151"+(cl(tot,totCls)?";"+cl(tot,totCls):"");
+return"<tr><td style='"+b+"'>"+l+"</td><td class='v' style='"+vs+"'>"+fmt(v)+"</td><td class='v' style='"+ts+"'>"+fmt(t)+"</td><td class='v' style='"+os+"'>"+fmt(tot)+"</td></tr>";
 }
-function SEC3(l){return"<tr><td colspan='3' style='padding:6px 5px 2px;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;"+BDR+"'>"+l+"</td></tr>";}
-function HDR3(){return"<tr><td></td><td class='v' style='padding:2px 5px;font-size:10px;font-weight:600;color:#374151;text-align:right'>ВСИП</td><td class='v' style='padding:2px 5px;font-size:10px;font-weight:600;color:#374151;text-align:right'>ТТ</td></tr>";}
+function SEC4(l){return"<tr><td colspan='4' style='padding:6px 5px 2px;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;"+BDR+"'>"+l+"</td></tr>";}
+function HDR4(){
+var h="padding:2px 5px;font-size:10px;font-weight:600;text-align:right";
+return"<tr><td></td>"
++"<td class='v' style='"+h+";color:#374151'>ВСИП</td>"
++"<td class='v' style='"+h+";color:#374151'>ТТ</td>"
++"<td class='v' style='"+h+";color:#6b7280'>Итого</td></tr>";
+}
 
 function render(r,live){
 var rows=[],vTot=0,tTot=0;
-rows.push(HDR3());
+rows.push(HDR4());
 
 // Balances
-rows.push(TR3("Остаток "+r.d0+" · ВСИП / ТТ",r.vSt,r.tSt,"",r.tSt<0?"r":"",""));
-rows.push(SEP3("ИТОГО на "+r.d0,r.vSt,r.tSt,"",""));
-
-rows.push(TR3("Остаток "+r.d1+" · ВСИП / ТТ",r.vEnd,r.tEnd,r.vEnd<0?"r":"",r.tEnd<0?"r":"",""));
-rows.push(SEP3("ИТОГО на "+r.d1,r.vEnd,r.tEnd,r.vEnd>=0?"g":"r",r.tEnd>=0?"g":"r"));
+rows.push(TR4("Остаток "+r.d0,r.vSt,r.tSt,"",r.tSt<0?"r":"",""));
+rows.push(SEP4("ИТОГО на "+r.d0,r.vSt,r.tSt,"",""));
+rows.push(TR4("Остаток "+r.d1,r.vEnd,r.tEnd,r.vEnd<0?"r":"",r.tEnd<0?"r":"",""));
+rows.push(SEP4("ИТОГО на "+r.d1,r.vEnd,r.tEnd,r.vEnd>=0?"g":"r",r.tEnd>=0?"g":"r"));
 
 // Income
-rows.push(SEC3("Поступления"));
+rows.push(SEC4("Поступления"));
 var vHasPi=Object.keys(r.vPiP).length>0,tHasPi=Object.keys(r.tPiP).length>0;
 if(vHasPi||tHasPi){
 PO.forEach(function(p){
 var v=r.vPiP[p]||0,t=r.tPiP[p]||0;
-if(v||t){rows.push(TR3(PN[p],v,t,"g","g",true));vTot+=v;tTot+=t;}
+if(v||t){rows.push(TR4(PN[p],v,t,"g","g",true));vTot+=v;tTot+=t;}
 });
 }else if(r.vPjIn||r.tPjIn){
-rows.push(TR3("Поступления по проектам",r.vPjIn,r.tPjIn,"g","g",true));
+rows.push(TR4("Поступления по проектам",r.vPjIn,r.tPjIn,"g","g",true));
 vTot+=r.vPjIn;tTot+=r.tPjIn;
 }
-if(r.vPr||r.tPr){rows.push(TR3("Процентные доходы",r.vPr,r.tPr,"g","g",true));vTot+=r.vPr;tTot+=r.tPr;}
-if(r.vRefund||r.tRefund){rows.push(TR3("Возвраты",r.vRefund,r.tRefund,"g","g",true));vTot+=r.vRefund;tTot+=r.tRefund;}
-if(r.vPoIn||r.tPoIn){rows.push(TR3("Прочие поступления",r.vPoIn,r.tPoIn,"g","g",true));vTot+=r.vPoIn;tTot+=r.tPoIn;}
-rows.push(SEP3("Итого поступлений",vTot,tTot,"g","g"));
+if(r.vPr||r.tPr){rows.push(TR4("Процентные доходы",r.vPr,r.tPr,"g","g",true));vTot+=r.vPr;tTot+=r.tPr;}
+if(r.vRefund||r.tRefund){rows.push(TR4("Возвраты",r.vRefund,r.tRefund,"g","g",true));vTot+=r.vRefund;tTot+=r.tRefund;}
+if(r.vPoIn||r.tPoIn){rows.push(TR4("Прочие поступления",r.vPoIn,r.tPoIn,"g","g",true));vTot+=r.vPoIn;tTot+=r.tPoIn;}
+rows.push(SEP4("Итого поступлений",vTot,tTot,"g","g"));
 
 // Project expenses
-rows.push(SEC3("Расходы по проектам"));
+rows.push(SEC4("Расходы по проектам"));
 var vHasPo=Object.keys(r.vPoP).length>0,tHasPo=Object.keys(r.tPoP).length>0;
 if(vHasPo||tHasPo){
 PO.forEach(function(p){
 var v=r.vPoP[p]||0,t=r.tPoP[p]||0;
-if(v||t)rows.push(TR3(PN[p],v,t,"","",true));
+if(v||t)rows.push(TR4(PN[p],v,t,"","",true));
 });
 }
-rows.push(SEP3("Итого проекты",r.vPjOut,r.tPjOut,"",""));
+rows.push(SEP4("Итого проекты",r.vPjOut,r.tPjOut,"",""));
 
 // Office
-rows.push(SEC3("Офисные расходы"));
-if(r.vZp||r.tZp)rows.push(TR3("Зарплата",r.vZp,r.tZp,"","",true));
-if(r.vKm||r.tKm)rows.push(TR3("Командировочные",r.vKm,r.tKm,"","",true));
-if(r.vIns||r.tIns)rows.push(TR3("Страхование",r.vIns,r.tIns,"","",true));
-if(r.vBk||r.tBk)rows.push(TR3("Банковские комиссии",r.vBk,r.tBk,"","",true));
-if(r.vLz||r.tLz)rows.push(TR3("Лизинг",r.vLz,r.tLz,"","",true));
-if(r.vAr||r.tAr)rows.push(TR3("Аренда",r.vAr,r.tAr,"","",true));
-if(r.vBuh||r.tBuh)rows.push(TR3("Бухгалтерия",r.vBuh,r.tBuh,"","",true));
-if(r.vNtax||r.tNtax)rows.push(TR3("Налоги и взносы",r.vNtax,r.tNtax,"","",true));
-if(r.vPct||r.tPct)rows.push(TR3("Проценты к уплате",r.vPct,r.tPct,"","",true));
-if(r.vBg||r.tBg)rows.push(TR3("Банковские гарантии",r.vBg,r.tBg,"","",true));
-if(r.vPo||r.tPo)rows.push(TR3("Прочие офисные",r.vPo,r.tPo,"","",true));
-rows.push(SEP3("Итого офисные",r.vOff,r.tOff,"",""));
+rows.push(SEC4("Офисные расходы"));
+if(r.vZp||r.tZp)rows.push(TR4("Зарплата",r.vZp,r.tZp,"","",true));
+if(r.vKm||r.tKm)rows.push(TR4("Командировочные",r.vKm,r.tKm,"","",true));
+if(r.vIns||r.tIns)rows.push(TR4("Страхование",r.vIns,r.tIns,"","",true));
+if(r.vBk||r.tBk)rows.push(TR4("Банковские комиссии",r.vBk,r.tBk,"","",true));
+if(r.vLz||r.tLz)rows.push(TR4("Лизинг",r.vLz,r.tLz,"","",true));
+if(r.vAr||r.tAr)rows.push(TR4("Аренда",r.vAr,r.tAr,"","",true));
+if(r.vBuh||r.tBuh)rows.push(TR4("Бухгалтерия",r.vBuh,r.tBuh,"","",true));
+if(r.vNtax||r.tNtax)rows.push(TR4("Налоги и взносы",r.vNtax,r.tNtax,"","",true));
+if(r.vPct||r.tPct)rows.push(TR4("Проценты к уплате",r.vPct,r.tPct,"","",true));
+if(r.vBg||r.tBg)rows.push(TR4("Банковские гарантии",r.vBg,r.tBg,"","",true));
+if(r.vPo||r.tPo)rows.push(TR4("Прочие офисные",r.vPo,r.tPo,"","",true));
+rows.push(SEP4("Итого офисные",r.vOff,r.tOff,"",""));
 
-// Transfers
+// Transfers — показываем только НЕТТО на компанию.
+// Валовые суммы раздуты из-за внутрикомпанийских переводов (оба конца попадают в одну компанию).
+// Нетто корректно: внутри компании = 0, межкомпанийские и внешние учитываются.
 var vTrN=r.vTrIn-r.vTrOut,tTrN=r.tTrIn-r.tTrOut;
-rows.push(SEC3("Переводы между счетами"));
-rows.push(TR3("Поступления",r.vTrIn,r.tTrIn,r.vTrIn>0?"g":"m",r.tTrIn>0?"g":"m",true));
-rows.push(TR3("Списания",r.vTrOut,r.tTrOut,"","",true));
-rows.push(SEP3("Нетто",vTrN,tTrN,vTrN>0?"g":vTrN<0?"r":"",tTrN>0?"g":tTrN<0?"r":""));
+rows.push(SEC4("Переводы между счетами"));
+rows.push(SEP4("Нетто переводов",vTrN,tTrN,vTrN>0?"g":vTrN<0?"r":"",tTrN>0?"g":tTrN<0?"r":""));
 
 // Loans
 if(r.vSkIn||r.tSkIn||r.vSkOut||r.tSkOut){
-rows.push(SEC3("Финансирование"));
-if(r.vSkIn||r.tSkIn)rows.push(TR3("Получение займов",r.vSkIn,r.tSkIn,"g","g",true));
-if(r.vSkOut||r.tSkOut)rows.push(TR3("Погашение займов",r.vSkOut,r.tSkOut,"","",true));
-rows.push(SEP3("Нетто займы",r.vSkIn-r.vSkOut,r.tSkIn-r.tSkOut,
+rows.push(SEC4("Финансирование"));
+if(r.vSkIn||r.tSkIn)rows.push(TR4("Получение займов",r.vSkIn,r.tSkIn,"g","g",true));
+if(r.vSkOut||r.tSkOut)rows.push(TR4("Погашение займов",r.vSkOut,r.tSkOut,"","",true));
+rows.push(SEP4("Нетто займы",r.vSkIn-r.vSkOut,r.tSkIn-r.tSkOut,
 r.vSkIn-r.vSkOut>0?"g":r.vSkIn-r.vSkOut<0?"r":"",
 r.tSkIn-r.tSkOut>0?"g":r.tSkIn-r.tSkOut<0?"r":""));
 }
 
-rows.push(SEP3("ВСЕГО РАСХОДОВ",r.vTe,r.tTe,"",""));
+rows.push(SEP4("ВСЕГО РАСХОДОВ",r.vTe,r.tTe,"",""));
 
-// Per-company control sums
-// vSt + vTot + vSkIn + vTrN - vTe - vSkOut = vEnd → ctrl ≈ 0
+// Per-company control sums: Ост.нач + Поступления + ТрНетто + ЗаймыНетто − Расходы − Ост.кон = 0
 var vCtrl=r.vSt+vTot+r.vSkIn+vTrN-r.vTe-r.vSkOut-r.vEnd;
 var tCtrl=r.tSt+tTot+r.tSkIn+tTrN-r.tTe-r.tSkOut-r.tEnd;
 var vOk=Math.abs(vCtrl)<1,tOk=Math.abs(tCtrl)<1;
-rows.push(SEP3((vOk&&tOk)?"Контрольная сумма":"Контрольная сумма ⚠",
+rows.push(SEP4((vOk&&tOk)?"Контрольная сумма":"Контрольная сумма ⚠",
 vCtrl,tCtrl,vOk?"g":"r",tOk?"g":"r"));
 
+var tOtCtrl=vCtrl+tCtrl;
 var st=live?'<span style="color:#16a34a">● live · '+r.cnt+' тр.</span>':'<span style="color:#9ca3af">данные на '+r.d1+'</span>';
 return'<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e5e7eb">'
 +'<div><div style="font-size:13px;font-weight:600">ДДС — '+r.label+'</div>'
@@ -402,8 +412,8 @@ var t=document.createElement("table");t.style.cssText="width:100%;border-collaps
 poDet.sort(function(a,b){return b.out-a.out;}).forEach(function(p){
 var tr=document.createElement("tr");
 tr.innerHTML="<td style='padding:2px 4px;font-size:10px;color:#666'>"+p.date+"</td>"
-+"<td style='padding:2px 4px;font-size:10px;color:#888'>"+p.co+"</td>"
-+"<td style='padding:2px 4px;font-size:10px;color:#666'>"+p.cat+"</td>"
++"<td style='padding:2px 4px;font-size:10px;color:#888;text-align:center'>"+p.co+"</td>"
++"<td colspan='2' style='padding:2px 4px;font-size:10px;color:#666'>"+p.cat+"</td>"
 +"<td style='padding:2px 4px;font-size:10px;text-align:right'>"+fmtI(p.out)+"</td>";
 t.appendChild(tr);
 });
