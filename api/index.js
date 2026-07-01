@@ -1,5 +1,3 @@
-module.exports.config = { api: { bodyParser: false } };
-
 function readBody(req) {
 return new Promise(function(resolve) {
 var d = '';
@@ -21,7 +19,7 @@ decodeURIComponent(pair.slice(i+1).replace(/\+/g,' '));
 return r;
 }
 
-module.exports = async function handler(req, res) {
+async function handler(req, res) {
 res.setHeader('X-Frame-Options', 'ALLOWALL');
 res.setHeader('Content-Security-Policy', "frame-ancestors *");
 res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -39,7 +37,10 @@ return res.status(200).send(html(domain, accountId, accessToken, vercelHost));
 
 return res.status(200).send('<html><body style="font-family:sans-serif;padding:20px">' +
 '<h3>&#x2713; ДДС виджет работает</h3></body></html>');
-};
+}
+
+handler.config = { api: { bodyParser: false } };
+module.exports = handler;
 
 function esc(s) {
 return String(s||'').replace(/\\/g,'\\\\').replace(/`/g,'\\`').replace(/\$/g,'\\$');
@@ -71,8 +72,6 @@ var DOMAIN="${esc(domain)}";
 var ACCOUNT_ID="${esc(accountId)}";
 var TOKEN="${esc(accessToken)}";
 var API_BASE="${esc(vercelHost)}"?"https://${esc(vercelHost)}":(location.origin||"");
-
-
 var VSIP={2:1,4:1,5:1,6:1,7:1,8:1};
 var TT={18:1};
 var OFF={24:1,26:1};
