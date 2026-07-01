@@ -46,8 +46,8 @@ module.exports = async function handler(req, res) {
     const qs = new URLSearchParams((req.url || '').split('?')[1] || '');
     const apiKey = process.env.ASPRO_API_KEY;
     const result = { keySet: !!apiKey, keyLen: apiKey ? apiKey.length : 0 };
-    if (qs.get('_test') === '1') {
-      const domain = qs.get('domain') || '';
+    const domain = qs.get('domain') || '';
+    if (domain) {
       if (domain) {
         const testUrl = 'https://' + domain + '/api/v1/module/fin/categories/list?api_key=' + encodeURIComponent(apiKey || '') + '&limit=5&page=1';
         result.testUrl = testUrl.replace(encodeURIComponent(apiKey || ''), '[KEY]');
