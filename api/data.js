@@ -41,19 +41,6 @@ module.exports = async function handler(req, res) {
   const rawParams = new URLSearchParams(rawQuery);
   const entity = rawParams.get('entity');
 
-  // DEBUG: temporary diagnostic (remove after fix)
-  if (rawParams.get('_debug') === '1') {
-    const envKeys = Object.keys(process.env).filter(k => k.startsWith('ASPRO'));
-    return send(200, {
-      debug: true,
-      aspro_domain_set: !!process.env.ASPRO_DOMAIN,
-      aspro_domain_len: (process.env.ASPRO_DOMAIN || '').length,
-      aspro_key_set: !!process.env.ASPRO_API_KEY,
-      aspro_key_len: (process.env.ASPRO_API_KEY || '').length,
-      env_keys_with_aspro: envKeys,
-    });
-  }
-
   if (!ALLOWED.includes(entity)) {
     return send(400, { error: 'entity not allowed' });
   }
@@ -61,11 +48,7 @@ module.exports = async function handler(req, res) {
   const domain = process.env.ASPRO_DOMAIN;
   const apiKey = process.env.ASPRO_API_KEY;
   if (!domain || !apiKey) {
-    return send(500, {
-      error: 'ASPRO_DOMAIN / ASPRO_API_KEY not set',
-      domain_set: !!domain,
-      key_set: !!apiKey,
-    });
+    return send(500, { error: 'ASPRO_DOMAIN / ASPRO_API_KEY not set' });
   }
 
   // Forward raw query string as-is (preserves filter[date][start_date] etc.), strip entity, add api_key
