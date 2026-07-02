@@ -420,7 +420,7 @@ function load(reset){
   Promise.all([
     loadAll("transaction"),
     loadAll("categories"),
-    loadAll("transaction_pls",{category_id:"3144,3147"})
+    loadAll("transaction_pls").catch(function(){return[];})
   ]).then(function(res){
     var txAll=res[0],cats=res[1],pls=res[2];
     var rng=getRange();
