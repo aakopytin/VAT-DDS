@@ -427,13 +427,18 @@ function load(reset){
     var rng=getRange();
     var txM=txAll.filter(function(tx){return tx.date&&tx.date>=rng.s0&&tx.date<=rng.s1;});
     console.log("[DDS] tx:",txAll.length,"period:",txM.length,"cats:",cats.length,"pls:",pls.length);
-    var dbg="<div style='font-size:9px;color:#aaa;padding:2px 0'>dbg: tx="+txAll.length+" txM="+txM.length+" cats="+cats.length+" pls="+pls.length+" q="+rng.label+"</div>";
     if(txM.length){
       var r=calc(txM,txAll,cats,pls,rng);
+      var dbg="<div style='font-size:9px;color:#aaa;padding:2px 0'>dbg: tx="+txAll.length+" txM="+txM.length+" cats="+cats.length+" pls="+pls.length+" q="+rng.label
+        +" | vSt="+Math.round(r.vSt)+" tSt="+Math.round(r.tSt)
+        +" | vPjIn="+Math.round(r.vPjIn)+" tPjIn="+Math.round(r.tPjIn)
+        +" | vPjOut="+Math.round(r.vPjOut)+" tPjOut="+Math.round(r.tPjOut)
+        +" | trInV="+Math.round(r.trIn_v)+" trInT="+Math.round(r.trIn_t)
+        +"</div>";
       el.innerHTML=render(r,true)+dbg;
       renderPoDet(r.poDet);
     }else{
-      el.innerHTML="<div style='padding:12px;font-size:11px;color:#666'>Нет данных за "+rng.label+"<br>tx всего: "+txAll.length+", период: "+txM.length+"<br>диапазон: "+rng.s0+" — "+rng.s1+"</div>"+dbg;
+      el.innerHTML="<div style='padding:12px;font-size:11px;color:#666'>Нет данных за "+rng.label+"<br>tx всего: "+txAll.length+", период: "+txM.length+"<br>диапазон: "+rng.s0+" — "+rng.s1+"</div>";
     }
     var b=document.getElementById("btn");if(b)b.onclick=function(){load(false);};
     var rb=document.getElementById("rst");if(rb)rb.onclick=function(){load(true);};
