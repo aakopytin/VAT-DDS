@@ -99,7 +99,7 @@ var AC={
 
 function fmt(v){if(v===null||v===undefined||v===0)return"—";return new Intl.NumberFormat("ru-RU",{minimumFractionDigits:2,maximumFractionDigits:2}).format(v);}
 function fmtI(v){return new Intl.NumberFormat("ru-RU",{minimumFractionDigits:0,maximumFractionDigits:0}).format(v||0);}
-function num(s){if(!s&&s!==0)return 0;return parseFloat(String(s).replace(/[^\d.\-]/g,""))||0;}
+function _ddsNum(s){if(!s&&s!==0)return 0;return parseFloat(String(s).replace(/[^\d.\-]/g,""))||0;}
 function getRange(){
   var qs=document.getElementById("qs");
   var val=qs?qs.value:"";
@@ -142,12 +142,10 @@ function calc(txMonth,txAll,cats,plsData,rng){
   txAll.forEach(function(tx){txIdx[tx.id]=tx;});
 
   var vSt=0,tSt=0,vEnd=0,tEnd=0;
-  var _cd={n:txAll.length,s0:rng.s0,s1:rng.s1};
-  txAll.forEach(function(tx,_i){
+  txAll.forEach(function(tx){
     if(!tx.date)return;
     var aid=tx.org_account_id;
-    var inc=num(tx.income)||0,out=num(tx.outcome)||0;
-    if(_i===0)_cd.tx0={date:tx.date,aid:aid,vsip:!!VSIP[aid],ltS0:(tx.date<rng.s0),raw_inc:tx.income,raw_out:tx.outcome,inc:inc,out:out,num_test:num(85000)};
+    var inc=_ddsNum(tx.income)||0,out=_ddsNum(tx.outcome)||0;
     if(tx.date<rng.s0){if(VSIP[aid])vSt+=inc-out;if(TT[aid])tSt+=inc-out;}
     if(tx.date<=rng.s1){if(VSIP[aid])vEnd+=inc-out;if(TT[aid])tEnd+=inc-out;}
   });
@@ -165,7 +163,7 @@ function calc(txMonth,txAll,cats,plsData,rng){
   txMonth.forEach(function(tx){
     var aid=tx.org_account_id,cn=cMap[tx.category_id]||"";
     var pid=tx.project_id||0;
-    var inc=num(tx.income)||0,out=num(tx.outcome)||0;
+    var inc=_ddsNum(tx.income)||0,out=_ddsNum(tx.outcome)||0;
     var isV=!!VSIP[aid],isT=!!TT[aid];
     if(!isV&&!isT)return;
     var rp=pid,gp=(rp&&PG[rp])?PG[rp]:rp;
@@ -224,7 +222,7 @@ function calc(txMonth,txAll,cats,plsData,rng){
     if(p.category_id!==3144&&p.category_id!==3147)return;
     var isV=p.org_id===1,isT=p.org_id===2;
     if(!isV&&!isT)return;
-    var inc=num(p.income)||0,out=num(p.outcome)||0;
+    var inc=_ddsNum(p.income)||0,out=_ddsNum(p.outcome)||0;
     if(p.project_id===27||p.project_id===24||p.project_id===26){
       if(p.category_id===3144){if(isV)trVatV+=out;if(isT)trVatT+=out;}
       return;
@@ -238,7 +236,7 @@ function calc(txMonth,txAll,cats,plsData,rng){
     var rp=projId||p.project_id||0;
     var gp=(rp&&PG[rp])?PG[rp]:rp;
     var pOk=gp&&!!PN[gp];
-    var isInc=refTx?(num(refTx.income)||0)>0:(inc>0);
+    var isInc=refTx?(_ddsNum(refTx.income)||0)>0:(inc>0);
     var key;
     if(cat==="pjIn"||cat==="pjOut"||cat==="svc"||cat==="bg")key="pj_"+(pOk?gp:rp);
     else if(cat==="pr")key="pr";
@@ -279,7 +277,7 @@ function calc(txMonth,txAll,cats,plsData,rng){
   var ctrl=tS+tot+skIn-(te+skOut-trNetto)-tE;
   var cOk=Math.abs(ctrl)<1;
 
-  return{_cd:_cd,vSt:vSt,tSt:tSt,vEnd:vEnd,tEnd:tEnd,tS:tS,tE:tE,
+  return{vSt:vSt,tSt:tSt,vEnd:vEnd,tEnd:tEnd,tS:tS,tE:tE,
     vPr:vPr,tPr:tPr,pr:pr,vPjIn:vPjIn,tPjIn:tPjIn,piP_v:piP_v,piP_t:piP_t,pjIn:pjIn,
     vRefund:vRefund,tRefund:tRefund,refund:refund,vPoIn:vPoIn,tPoIn:tPoIn,poIn:poIn,tot:tot,
     vPjOut:vPjOut,tPjOut:tPjOut,pjOut:pjOut,poP_v:poP_v,poP_t:poP_t,
@@ -428,27 +426,12 @@ function load(reset){
     var txAll=res[0],cats=res[1],pls=res[2];
     var rng=getRange();
     var txM=txAll.filter(function(tx){return tx.date&&tx.date>=rng.s0&&tx.date<=rng.s1;});
-    console.log("[DDS] tx:",txAll.length,"period:",txM.length,"cats:",cats.length,"pls:",pls.length);
-    var t0=txAll[0]||{};
-    var dbg0="<div style='font-size:9px;color:#aaa;padding:2px 0'>dbg: tx="+txAll.length+" txM="+txM.length+" cats="+cats.length+" pls="+pls.length+" q="+rng.label
-      +" | tx[0]: id="+t0.id+" date="+t0.date+" acc="+t0.org_account_id+" out="+t0.outcome
-      +"</div>";
     if(txM.length){
       var r=calc(txM,txAll,cats,pls,rng);
-      var cd=r._cd,t0=cd.tx0||{};
-      var dbg="<div style='font-size:9px;color:#aaa;padding:2px 0'>calc: vSt="+Math.round(r.vSt)+" tSt="+Math.round(r.tSt)
-        +" | pjIn_v="+Math.round(r.vPjIn)+" pjIn_t="+Math.round(r.tPjIn)
-        +" | pjOut_v="+Math.round(r.vPjOut)+" pjOut_t="+Math.round(r.tPjOut)
-        +"</div>"
-        +"<div style='font-size:9px;color:#aaa;padding:2px 0'>inside calc: n="+cd.n+" s0="+cd.s0
-        +" | [0]: date="+t0.date+" aid="+t0.aid+" vsip="+t0.vsip+" ltS0="+t0.ltS0
-        +" raw_out="+t0.raw_out+" out="+t0.out+" num(85000)="+t0.num_test
-        +"</div>";
-      el.innerHTML=render(r,true)+dbg0+dbg;
+      el.innerHTML=render(r,true);
       renderPoDet(r.poDet);
     }else{
-      el.innerHTML="<div style='padding:12px;font-size:11px;color:#666'>Нет данных за "+rng.label+"<br>tx всего: "+txAll.length+", период: "+txM.length+"<br>диапазон: "+rng.s0+" — "+rng.s1+"</div>"+dbg0;
-      el.innerHTML="<div style='padding:12px;font-size:11px;color:#666'>Нет данных за "+rng.label+"<br>tx всего: "+txAll.length+", период: "+txM.length+"<br>диапазон: "+rng.s0+" — "+rng.s1+"</div>";
+      el.innerHTML="<div style='padding:12px;font-size:11px;color:#666'>Нет данных за "+rng.label+" ("+rng.s0+" — "+rng.s1+")</div>";
     }
     var b=document.getElementById("btn");if(b)b.onclick=function(){load(false);};
     var rb=document.getElementById("rst");if(rb)rb.onclick=function(){load(true);};
