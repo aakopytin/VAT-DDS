@@ -219,6 +219,7 @@ function calc(txMonth,txAll,cats,plsData,rng){
 
   plsData.forEach(function(p){
     if(!p.date||p.date<rng.s0||p.date>rng.s1)return;
+    if(p.category_id!==3144&&p.category_id!==3147)return;
     var isV=p.org_id===1,isT=p.org_id===2;
     if(!isV&&!isT)return;
     var inc=num(p.income)||0,out=num(p.outcome)||0;
@@ -420,7 +421,7 @@ function load(reset){
   Promise.all([
     loadAll("transaction"),
     loadAll("categories"),
-    loadAll("transaction_pls").catch(function(){return[];})
+    loadAll("transaction_pls",{"filter[category_id]":"3144,3147","filter[date][start_date]":rng.s0,"filter[date][end_date]":rng.s1}).catch(function(){return[];})
   ]).then(function(res){
     var txAll=res[0],cats=res[1],pls=res[2];
     var rng=getRange();
