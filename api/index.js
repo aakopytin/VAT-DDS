@@ -68,6 +68,7 @@ details table td{font-size:10px;color:#555;padding:2px 4px}
 </div>
 <div id="root" style="color:#9ca3af">ДДС — загрузка…</div>
 <script>
+(function(){
 var DOMAIN="${esc(d)}";
 var ACCOUNT_ID="${esc(a)}";
 var TOKEN="${esc(t)}";
@@ -461,7 +462,7 @@ function load(reset){
 
 load(false);
 setInterval(function(){load(false);},5*60*1000);
-console.log("[DDS] started | domain:",DOMAIN,"| token:",!!TOKEN);
+})();
 </script>
 </body>
 </html>`;
