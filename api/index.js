@@ -142,10 +142,12 @@ function calc(txMonth,txAll,cats,plsData,rng){
   txAll.forEach(function(tx){txIdx[tx.id]=tx;});
 
   var vSt=0,tSt=0,vEnd=0,tEnd=0;
-  txAll.forEach(function(tx){
+  var _cd={n:txAll.length,s0:rng.s0,s1:rng.s1};
+  txAll.forEach(function(tx,_i){
     if(!tx.date)return;
     var aid=tx.org_account_id;
     var inc=num(tx.income)||0,out=num(tx.outcome)||0;
+    if(_i===0)_cd.tx0={date:tx.date,aid:aid,inc:inc,out:out,vsip:!!VSIP[aid],tt:!!TT[aid],ltS0:(tx.date<rng.s0)};
     if(tx.date<rng.s0){if(VSIP[aid])vSt+=inc-out;if(TT[aid])tSt+=inc-out;}
     if(tx.date<=rng.s1){if(VSIP[aid])vEnd+=inc-out;if(TT[aid])tEnd+=inc-out;}
   });
@@ -277,7 +279,7 @@ function calc(txMonth,txAll,cats,plsData,rng){
   var ctrl=tS+tot+skIn-(te+skOut-trNetto)-tE;
   var cOk=Math.abs(ctrl)<1;
 
-  return{vSt:vSt,tSt:tSt,vEnd:vEnd,tEnd:tEnd,tS:tS,tE:tE,
+  return{_cd:_cd,vSt:vSt,tSt:tSt,vEnd:vEnd,tEnd:tEnd,tS:tS,tE:tE,
     vPr:vPr,tPr:tPr,pr:pr,vPjIn:vPjIn,tPjIn:tPjIn,piP_v:piP_v,piP_t:piP_t,pjIn:pjIn,
     vRefund:vRefund,tRefund:tRefund,refund:refund,vPoIn:vPoIn,tPoIn:tPoIn,poIn:poIn,tot:tot,
     vPjOut:vPjOut,tPjOut:tPjOut,pjOut:pjOut,poP_v:poP_v,poP_t:poP_t,
@@ -433,10 +435,13 @@ function load(reset){
       +"</div>";
     if(txM.length){
       var r=calc(txM,txAll,cats,pls,rng);
+      var cd=r._cd,t0=cd.tx0||{};
       var dbg="<div style='font-size:9px;color:#aaa;padding:2px 0'>calc: vSt="+Math.round(r.vSt)+" tSt="+Math.round(r.tSt)
         +" | pjIn_v="+Math.round(r.vPjIn)+" pjIn_t="+Math.round(r.tPjIn)
         +" | pjOut_v="+Math.round(r.vPjOut)+" pjOut_t="+Math.round(r.tPjOut)
-        +" | trInV="+Math.round(r.trIn_v)+" trInT="+Math.round(r.trIn_t)
+        +"</div>"
+        +"<div style='font-size:9px;color:#aaa;padding:2px 0'>inside calc: n="+cd.n+" s0="+cd.s0
+        +" | [0]: date="+t0.date+" aid="+t0.aid+" vsip="+t0.vsip+" ltS0="+t0.ltS0+" inc="+t0.inc+" out="+t0.out
         +"</div>";
       el.innerHTML=render(r,true)+dbg0+dbg;
       renderPoDet(r.poDet);
