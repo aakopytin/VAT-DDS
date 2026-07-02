@@ -147,7 +147,7 @@ function calc(txMonth,txAll,cats,plsData,rng){
     if(!tx.date)return;
     var aid=tx.org_account_id;
     var inc=num(tx.income)||0,out=num(tx.outcome)||0;
-    if(_i===0)_cd.tx0={date:tx.date,aid:aid,inc:inc,out:out,vsip:!!VSIP[aid],tt:!!TT[aid],ltS0:(tx.date<rng.s0)};
+    if(_i===0)_cd.tx0={date:tx.date,aid:aid,vsip:!!VSIP[aid],ltS0:(tx.date<rng.s0),raw_inc:tx.income,raw_out:tx.outcome,inc:inc,out:out,num_test:num(85000)};
     if(tx.date<rng.s0){if(VSIP[aid])vSt+=inc-out;if(TT[aid])tSt+=inc-out;}
     if(tx.date<=rng.s1){if(VSIP[aid])vEnd+=inc-out;if(TT[aid])tEnd+=inc-out;}
   });
@@ -441,7 +441,8 @@ function load(reset){
         +" | pjOut_v="+Math.round(r.vPjOut)+" pjOut_t="+Math.round(r.tPjOut)
         +"</div>"
         +"<div style='font-size:9px;color:#aaa;padding:2px 0'>inside calc: n="+cd.n+" s0="+cd.s0
-        +" | [0]: date="+t0.date+" aid="+t0.aid+" vsip="+t0.vsip+" ltS0="+t0.ltS0+" inc="+t0.inc+" out="+t0.out
+        +" | [0]: date="+t0.date+" aid="+t0.aid+" vsip="+t0.vsip+" ltS0="+t0.ltS0
+        +" raw_out="+t0.raw_out+" out="+t0.out+" num(85000)="+t0.num_test
         +"</div>";
       el.innerHTML=render(r,true)+dbg0+dbg;
       renderPoDet(r.poDet);
