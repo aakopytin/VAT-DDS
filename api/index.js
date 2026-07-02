@@ -427,17 +427,21 @@ function load(reset){
     var rng=getRange();
     var txM=txAll.filter(function(tx){return tx.date&&tx.date>=rng.s0&&tx.date<=rng.s1;});
     console.log("[DDS] tx:",txAll.length,"period:",txM.length,"cats:",cats.length,"pls:",pls.length);
+    var t0=txAll[0]||{};
+    var dbg0="<div style='font-size:9px;color:#aaa;padding:2px 0'>dbg: tx="+txAll.length+" txM="+txM.length+" cats="+cats.length+" pls="+pls.length+" q="+rng.label
+      +" | tx[0]: id="+t0.id+" date="+t0.date+" acc="+t0.org_account_id+" out="+t0.outcome
+      +"</div>";
     if(txM.length){
       var r=calc(txM,txAll,cats,pls,rng);
-      var dbg="<div style='font-size:9px;color:#aaa;padding:2px 0'>dbg: tx="+txAll.length+" txM="+txM.length+" cats="+cats.length+" pls="+pls.length+" q="+rng.label
-        +" | vSt="+Math.round(r.vSt)+" tSt="+Math.round(r.tSt)
-        +" | vPjIn="+Math.round(r.vPjIn)+" tPjIn="+Math.round(r.tPjIn)
-        +" | vPjOut="+Math.round(r.vPjOut)+" tPjOut="+Math.round(r.tPjOut)
+      var dbg="<div style='font-size:9px;color:#aaa;padding:2px 0'>calc: vSt="+Math.round(r.vSt)+" tSt="+Math.round(r.tSt)
+        +" | pjIn_v="+Math.round(r.vPjIn)+" pjIn_t="+Math.round(r.tPjIn)
+        +" | pjOut_v="+Math.round(r.vPjOut)+" pjOut_t="+Math.round(r.tPjOut)
         +" | trInV="+Math.round(r.trIn_v)+" trInT="+Math.round(r.trIn_t)
         +"</div>";
-      el.innerHTML=render(r,true)+dbg;
+      el.innerHTML=render(r,true)+dbg0+dbg;
       renderPoDet(r.poDet);
     }else{
+      el.innerHTML="<div style='padding:12px;font-size:11px;color:#666'>Нет данных за "+rng.label+"<br>tx всего: "+txAll.length+", период: "+txM.length+"<br>диапазон: "+rng.s0+" — "+rng.s1+"</div>"+dbg0;
       el.innerHTML="<div style='padding:12px;font-size:11px;color:#666'>Нет данных за "+rng.label+"<br>tx всего: "+txAll.length+", период: "+txM.length+"<br>диапазон: "+rng.s0+" — "+rng.s1+"</div>";
     }
     var b=document.getElementById("btn");if(b)b.onclick=function(){load(false);};
