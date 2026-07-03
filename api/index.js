@@ -308,6 +308,10 @@ function calc(txMonth,txAll,cats,plsData,rng){
     }
   });
 
+  // Зеркалирование НДС трансферов: Аспро пишет только одну сторону ВСИП↔ТТ
+  var tVatTrInD=tVatTrIn||vVatTrOut, tVatTrOutD=tVatTrOut||vVatTrIn;
+  var vVatTrInD=vVatTrIn||tVatTrOut, vVatTrOutD=vVatTrOut||tVatTrIn;
+
   var pjIn=vPjIn+tPjIn,pr=vPr+tPr,refund=vRefund+tRefund,poIn=vPoIn+tPoIn;
   var tot=pjIn+pr+refund+poIn;
   var pjOut=vPjOut+tPjOut;
@@ -335,7 +339,9 @@ function calc(txMonth,txAll,cats,plsData,rng){
     trIn_v:trIn_v,trOut_v:trOut_v,trIn_t:trIn_t,trOut_t:trOut_t,trNetto:trNetto,
     vSkIn:vSkIn,tSkIn:tSkIn,skIn:skIn,vSkOut:vSkOut,tSkOut:tSkOut,skOut:skOut,
     vVatPiP:vVatPiP,tVatPiP:tVatPiP,vVatPoP:vVatPoP,tVatPoP:tVatPoP,
-    vVatTr:vVatTr,tVatTr:tVatTr,vVatTrIn:vVatTrIn,tVatTrIn:tVatTrIn,vVatTrOut:vVatTrOut,tVatTrOut:tVatTrOut,vVatRefV:vVatRefV,tVatRefV:tVatRefV,
+    vVatTr:vVatTr,tVatTr:tVatTr,vVatTrIn:vVatTrIn,tVatTrIn:tVatTrIn,vVatTrOut:vVatTrOut,tVatTrOut:tVatTrOut,
+    vVatTrInD:vVatTrInD,tVatTrInD:tVatTrInD,vVatTrOutD:vVatTrOutD,tVatTrOutD:tVatTrOutD,
+    vVatRefV:vVatRefV,tVatRefV:tVatRefV,
     vVatOffV:vVatOffV,tVatOffV:tVatOffV,
     vVatZp:vVatZp,tVatZp:tVatZp,vVatKm:vVatKm,tVatKm:tVatKm,vVatBk:vVatBk,tVatBk:tVatBk,
     vVatIns:vVatIns,tVatIns:tVatIns,vVatLz:vVatLz,tVatLz:tVatLz,vVatAr:vVatAr,tVatAr:tVatAr,
@@ -346,9 +352,9 @@ function calc(txMonth,txAll,cats,plsData,rng){
 }
 
 function HDR(){
-  var sb="width:22px;padding:1px 2px;font-size:10px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap;overflow:hidden";
-  var sn="width:17px;padding:1px 2px;font-size:10px;font-weight:700;color:#9ca3af;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap;overflow:hidden";
-  var sl="width:32px;padding:1px 2px;font-size:10px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;overflow:hidden;white-space:nowrap;text-overflow:ellipsis";
+  var sb="width:11px;padding:1px 2px;font-size:10px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap;overflow:hidden";
+  var sn="width:8px;padding:1px 2px;font-size:10px;font-weight:700;color:#9ca3af;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap;overflow:hidden";
+  var sl="width:16px;padding:1px 2px;font-size:10px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;overflow:hidden;white-space:nowrap;text-overflow:ellipsis";
   return"<tr><td style='"+sl+"'></td><td style='"+sb+"'>Итого</td><td style='"+sb+"'>ВСИП</td><td style='"+sn+"'>НДС</td><td style='"+sb+"'>ТТ</td><td style='"+sn+"'>НДС</td></tr>";
 }
 function TR6(l,tot,v,nv,t,nt,cls,ind){
@@ -437,12 +443,12 @@ function render(r,live){
 
   rows.push(SEC("Переводы между счетами"));
   if(r.trIn_v||r.trIn_t){
-    rows.push(TR6("Получено",r.trIn_v+r.trIn_t,r.trIn_v,r.vVatTrIn||null,r.trIn_t,r.tVatTrIn||null,"g",1));
+    rows.push(TR6("Получено",r.trIn_v+r.trIn_t,r.trIn_v,r.vVatTrInD||null,r.trIn_t,r.tVatTrInD||null,"g",1));
   }
   if(r.trOut_v||r.trOut_t){
-    rows.push(TR6("Списано",r.trOut_v+r.trOut_t,r.trOut_v,r.vVatTrOut||null,r.trOut_t,r.tVatTrOut||null,"",1));
+    rows.push(TR6("Списано",r.trOut_v+r.trOut_t,r.trOut_v,r.vVatTrOutD||null,r.trOut_t,r.tVatTrOutD||null,"",1));
   }
-  rows.push(SEP6("Нетто переводы",r.trNetto,(r.trIn_v-r.trOut_v),(r.vVatTrIn-r.vVatTrOut)||null,(r.trIn_t-r.trOut_t),(r.tVatTrIn-r.tVatTrOut)||null,r.trNetto>0?"g":r.trNetto<0?"r":""));
+  rows.push(SEP6("Нетто переводы",r.trNetto,(r.trIn_v-r.trOut_v),(r.vVatTrInD-r.vVatTrOutD)||null,(r.trIn_t-r.trOut_t),(r.tVatTrInD-r.tVatTrOutD)||null,r.trNetto>0?"g":r.trNetto<0?"r":""));
 
   if(r.skIn||r.skOut){
     rows.push(SEC("Финансирование (займы)"));
