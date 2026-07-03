@@ -320,12 +320,12 @@ function calc(txMonth,txAll,cats,plsData,rng){
 function HDR(){
   var sb="width:60px;padding:1px 2px;font-size:9px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap;overflow:hidden";
   var sn="width:48px;padding:1px 2px;font-size:9px;font-weight:700;color:#9ca3af;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap;overflow:hidden";
-  var sl="padding:1px 2px;font-size:9px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af";
+  var sl="width:110px;padding:1px 2px;font-size:9px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;overflow:hidden;white-space:nowrap;text-overflow:ellipsis";
   return"<tr><td style='"+sl+"'></td><td style='"+sb+"'>Итого</td><td style='"+sb+"'>ВСИП</td><td style='"+sn+"'>НДС</td><td style='"+sb+"'>ТТ</td><td style='"+sn+"'>НДС</td></tr>";
 }
 function TR6(l,tot,v,nv,t,nt,cls,ind){
   var cn="";if(cls==="g"&&(tot||0)>0)cn="color:#16a34a";if(cls==="r"&&(tot||0)<0)cn="color:#dc2626";if(cls==="m")cn="color:#6b7280";
-  var sl="padding:1px 2px;color:#1f2937;font-size:10px"+(ind?";padding-left:10px":"");
+  var sl="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:1px 2px;color:#1f2937;font-size:10px"+(ind?";padding-left:10px":"");
   var sr="padding:1px 2px;text-align:right;white-space:nowrap;font-size:10px;color:#1f2937";
   var sc=sr+(cn?";"+cn:"");
   var sn="padding:1px 2px;text-align:right;white-space:nowrap;font-size:9px;color:#6b7280";
@@ -333,7 +333,7 @@ function TR6(l,tot,v,nv,t,nt,cls,ind){
 }
 function SEP6(l,tot,v,nv,t,nt,cls){
   var cn="";if(cls==="g"&&(tot||0)>0)cn="color:#16a34a";if(cls==="r"&&(tot||0)<0)cn="color:#dc2626";
-  var s="padding:1px 2px;font-weight:700;font-size:10px;color:#111827;border-top:1px solid #d1d5db";
+  var s="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:1px 2px;font-weight:700;font-size:10px;color:#111827;border-top:1px solid #d1d5db";
   var sr=s+";text-align:right;white-space:nowrap";var sc=sr+(cn?";"+cn:"");var sn=sr+";color:#6b7280;font-weight:400;font-size:9px";
   return"<tr><td style='"+s+"'>"+l+"</td><td style='"+sc+"'>"+fmt(tot)+"</td><td style='"+sr+"'>"+fmt(v)+"</td><td style='"+sn+"'>"+fmt(nv)+"</td><td style='"+sr+"'>"+fmt(t)+"</td><td style='"+sn+"'>"+fmt(nt)+"</td></tr>";
 }
@@ -408,10 +408,10 @@ function render(r,live){
 
   rows.push(SEC("Переводы между счетами"));
   if(r.trIn_v||r.trIn_t){
-    rows.push(TR6("Нетто переводы полученные",r.trIn_v+r.trIn_t,r.trIn_v,null,r.trIn_t,null,"g",""));
+    rows.push(TR6("Получено",r.trIn_v+r.trIn_t,r.trIn_v,null,r.trIn_t,null,"g",1));
   }
   if(r.trOut_v||r.trOut_t){
-    rows.push(TR6("Нетто переводы списание",r.trOut_v+r.trOut_t,r.trOut_v,null,r.trOut_t,null,"",""));
+    rows.push(TR6("Списано",r.trOut_v+r.trOut_t,r.trOut_v,null,r.trOut_t,null,"",1));
   }
   rows.push(SEP6("Нетто переводы",r.trNetto,(r.trIn_v-r.trOut_v),r.vVatTr||null,(r.trIn_t-r.trOut_t),r.tVatTr||null,r.trNetto>0?"g":r.trNetto<0?"r":""));
 
