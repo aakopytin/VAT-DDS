@@ -100,7 +100,7 @@ var AC={
 
 function fmt(v){if(v===null||v===undefined||v===0)return"—";return new Intl.NumberFormat("ru-RU",{minimumFractionDigits:2,maximumFractionDigits:2}).format(v);}
 function fmtI(v){return new Intl.NumberFormat("ru-RU",{minimumFractionDigits:0,maximumFractionDigits:0}).format(v||0);}
-function _ddsNum(s){if(!s&&s!==0)return 0;return parseFloat(String(s).replace(/[^\d.\-]/g,""))||0;}
+function _ddsNum(s){if(!s&&s!==0)return 0;return parseFloat(String(s).replace(/[^0-9.-]/g,""))||0;}
 function getRange(){
   var qs=document.getElementById("qs");
   var val=qs?qs.value:"";
