@@ -208,55 +208,36 @@ function calc(txMonth,txAll,cats,plsData,rng){
   });
 
   // ─── НДС из transaction_pls ──────────────────────────────────────────────
-  // category_id=3144: НДС к уплате (output VAT per act/invoice, accrual basis)
-  //   org_id=1 (ВСИП): начисленный НДС с доходов проекта
-  //   org_id=2 (ТТ):   НДС в расходах проекта (входящий, невозмещаемый)
-  // category_id=3147: Возврат НДС (входящий НДС к возмещению из бюджета, org_id=1)
-  // Группируем по project_id напрямую; reference_id не используем
-  // (reference_id указывает на платёжку в бюджет, а не на транзакцию-источник)
+  // category_id=3144: НДС к уплате (outcome) → ДОХОДНАЯ строка (output VAT в составе поступлений)
+  // category_id=3147: Возврат НДС (income)   → РАСХОДНАЯ строка (input VAT в составе платежей)
+  // !pOk → трансферы/прочее → vVatTr / tVatTr
 
-  // Per-project VAT
-  var pjVatV={},pjVatT={};   // ВСИП output VAT / TT input VAT per project group (income rows)
-  PO.forEach(function(p){pjVatV[p]=0;pjVatT[p]=0;});
-  // Transfer project VAT
-  var trVatV=0,trVatT=0;
-  // Org-level totals for summary table
-  var vatPayV=0;   // ВСИП 3144: output VAT to pay to budget
-  var vatPayT=0;   // TT   3144: input VAT costs (non-reclaimable)
-  var vatRefV=0;   // ВСИП 3147: excess input VAT refunded from budget
-  var vatRefT=0;   // TT   3147: (unlikely, but track)
+  var vVatPiP={},tVatPiP={},vVatPoP={},tVatPoP={};
+  var vVatTr=0,tVatTr=0;
+  var vVatTotalIn=0,tVatTotalIn=0,vVatTotalOut=0,tVatTotalOut=0;
 
-  plsData.forEach(function(p){
+  (plsData||[]).forEach(function(p){
     if(!p.date||p.date<rng.s0||p.date>rng.s1)return;
-    if(p.category_id!==3144&&p.category_id!==3147)return;
-    var isV=p.org_id===1,isT=p.org_id===2;
-    if(!isV&&!isT)return;
+    var is3144=p.category_id===3144,is3147=p.category_id===3147;
+    if(!is3144&&!is3147)return;
     var pid=p.project_id||0;
-    var amt44=p.category_id===3144?(_ddsNum(p.outcome)||0):0;
-    var amt47=p.category_id===3147?(_ddsNum(p.income)||0):0;
-
-    // Transfer projects (27/24/26) → trVat
-    if(pid===27||pid===24||pid===26){
-      if(isV){trVatV+=amt44;vatPayV+=amt44;vatRefV+=amt47;}
-      if(isT){trVatT+=amt44;vatPayT+=amt44;}
-      return;
-    }
-
     var gp=(pid&&PG[pid])?PG[pid]:pid;
     var pOk=gp&&!!PN[gp];
-
-    if(p.category_id===3144){
-      if(isV){vatPayV+=amt44;if(pOk)pjVatV[gp]=(pjVatV[gp]||0)+amt44;}
-      if(isT){vatPayT+=amt44;if(pOk)pjVatT[gp]=(pjVatT[gp]||0)+amt44;}
+    if(is3144){
+      // output VAT → income rows (НДС в составе поступлений проекта)
+      var out44=_ddsNum(p.outcome)||0;if(!out44)return;
+      if(!pOk){if(p.org_id===1)vVatTr+=out44;else if(p.org_id===2)tVatTr+=out44;return;}
+      if(p.org_id===1){vVatPiP[gp]=(vVatPiP[gp]||0)+out44;vVatTotalIn+=out44;}
+      else if(p.org_id===2){tVatPiP[gp]=(tVatPiP[gp]||0)+out44;tVatTotalIn+=out44;}
     }
-    if(p.category_id===3147){
-      if(isV)vatRefV+=amt47;
-      if(isT)vatRefT+=amt47;
+    if(is3147){
+      // input VAT → expense rows (НДС в составе платежей проекта)
+      var inc47=_ddsNum(p.income)||0;if(!inc47)return;
+      if(!pOk){if(p.org_id===1)vVatTr+=inc47;else if(p.org_id===2)tVatTr+=inc47;return;}
+      if(p.org_id===1){vVatPoP[gp]=(vVatPoP[gp]||0)+inc47;vVatTotalOut+=inc47;}
+      else if(p.org_id===2){tVatPoP[gp]=(tVatPoP[gp]||0)+inc47;tVatTotalOut+=inc47;}
     }
   });
-
-  // БАЛАНС НДС: ВСИП = output VAT − refund claims (>0 → pay to budget)
-  var vatBalV=vatPayV-vatRefV;
 
   var pjIn=vPjIn+tPjIn,pr=vPr+tPr,refund=vRefund+tRefund,poIn=vPoIn+tPoIn;
   var tot=pjIn+pr+refund+poIn;
@@ -281,8 +262,9 @@ function calc(txMonth,txAll,cats,plsData,rng){
     vPo:vPo,tPo:tPo,po:po,vPct:vPct,tPct:tPct,pct:pct,vBg:vBg,tBg:tBg,bg:bg,te:te,
     trIn_v:trIn_v,trOut_v:trOut_v,trIn_t:trIn_t,trOut_t:trOut_t,trNetto:trNetto,
     vSkIn:vSkIn,tSkIn:tSkIn,skIn:skIn,vSkOut:vSkOut,tSkOut:tSkOut,skOut:skOut,
-    pjVatV:pjVatV,pjVatT:pjVatT,trVatV:trVatV,trVatT:trVatT,
-    vatPayV:vatPayV,vatPayT:vatPayT,vatRefV:vatRefV,vatRefT:vatRefT,vatBalV:vatBalV,
+    vVatPiP:vVatPiP,tVatPiP:tVatPiP,vVatPoP:vVatPoP,tVatPoP:tVatPoP,
+    vVatTr:vVatTr,tVatTr:tVatTr,
+    vVatTotalIn:vVatTotalIn,tVatTotalIn:tVatTotalIn,vVatTotalOut:vVatTotalOut,tVatTotalOut:tVatTotalOut,
     ctrl:ctrl,cOk:cOk,poDet:poDet,cnt:txMonth.length,d0:rng.d0,d1:rng.d1,label:rng.label,ymd:rng.ymd};
 }
 
@@ -339,8 +321,7 @@ function render(r,live){
   if(hasPi){
     PO.forEach(function(p){
       var pv=r.piP_v[p]||0,pt=r.piP_t[p]||0;
-      // НДС ВСИП = 3144 (output VAT per act); НДС ТТ = ТТ not a VAT payer → null
-      if(pv||pt)rows.push(TR6(PN[p],pv+pt,pv,r.pjVatV[p]||0,pt,null,"g",1));
+      if(pv||pt)rows.push(TR6(PN[p],pv+pt,pv,r.vVatPiP[p]||0,pt,r.tVatPiP[p]||0,"g",1));
     });
   }else if(r.pjIn){
     rows.push(TR6("Поступления по проектам",r.pjIn,r.vPjIn,null,r.tPjIn,null,"g",1));
@@ -348,18 +329,17 @@ function render(r,live){
   if(r.pr)rows.push(TR6("Процентные доходы",r.pr,r.vPr,null,r.tPr,null,"g",1));
   if(r.refund)rows.push(TR6("Возвраты",r.refund,r.vRefund,null,r.tRefund,null,"g",1));
   if(r.poIn)rows.push(TR6("Прочие поступления",r.poIn,r.vPoIn,null,r.tPoIn,null,"g",1));
-  rows.push(SEP6("Итого поступлений",r.tot,r.vPjIn+r.vPr+r.vRefund+r.vPoIn,null,r.tPjIn+r.tPr+r.tRefund+r.tPoIn,null,"g"));
+  rows.push(SEP6("Итого поступлений",r.tot,r.vPjIn+r.vPr+r.vRefund+r.vPoIn,r.vVatTotalIn,r.tPjIn+r.tPr+r.tRefund+r.tPoIn,r.tVatTotalIn,"g"));
 
   rows.push(SEC("Расходы по проектам"));
   var hasPo=Object.keys(r.poP_v).length>0||Object.keys(r.poP_t).length>0;
   if(hasPo){
     PO.forEach(function(p){
       var pv=r.poP_v[p]||0,pt=r.poP_t[p]||0;
-      // НДС ТТ = 3144 для ТТ (входящий НДС в расходах, невозмещаемый)
-      if(pv||pt)rows.push(TR6(PN[p],pv+pt,pv,null,pt,r.pjVatT[p]||0,"",1));
+      if(pv||pt)rows.push(TR6(PN[p],pv+pt,pv,r.vVatPoP[p]||0,pt,r.tVatPoP[p]||0,"",1));
     });
   }
-  rows.push(SEP6("Итого проекты",r.pjOut,r.vPjOut,null,r.tPjOut,null,""));
+  rows.push(SEP6("Итого проекты",r.pjOut,r.vPjOut,r.vVatTotalOut,r.tPjOut,r.tVatTotalOut,""));
 
   rows.push(SEC("Офисные расходы"));
   if(r.zp)rows.push(TR6("Зарплата",r.zp,r.vZp,null,r.tZp,null,"",1));
@@ -379,12 +359,13 @@ function render(r,live){
 
   rows.push(SEC("Переводы между счетами"));
   if(r.trIn_v||r.trIn_t){
-    rows.push(TR6("Нетто переводы полученные",r.trIn_v+r.trIn_t,r.trIn_v,r.trVatT,r.trIn_t,r.trVatV,"g",""));
+    rows.push(TR6("Нетто переводы полученные",r.trIn_v+r.trIn_t,r.trIn_v,null,r.trIn_t,null,"g",""));
   }
   if(r.trOut_v||r.trOut_t){
-    rows.push(TR6("Нетто переводы списание",r.trOut_v+r.trOut_t,r.trOut_v,r.trVatV,r.trOut_t,r.trVatT,"",""));
+    rows.push(TR6("Нетто переводы списание",r.trOut_v+r.trOut_t,r.trOut_v,null,r.trOut_t,null,"",""));
   }
   rows.push(SEP6("Нетто переводы",r.trNetto,(r.trIn_v-r.trOut_v),null,(r.trIn_t-r.trOut_t),null,r.trNetto>0?"g":r.trNetto<0?"r":""));
+  if(r.vVatTr||r.tVatTr)rows.push(TR6("НДС (трансферы/прочее)",r.vVatTr+r.tVatTr,r.vVatTr,null,r.tVatTr,null,"m",1));
 
   if(r.skIn||r.skOut){
     rows.push(SEC("Финансирование (займы)"));
@@ -393,26 +374,27 @@ function render(r,live){
     rows.push(SEP6("Нетто займы",r.skIn-r.skOut,r.vSkIn-r.vSkOut,null,r.tSkIn-r.tSkOut,null,r.skIn-r.skOut>0?"g":r.skIn-r.skOut<0?"r":""));
   }
 
-  rows.push(SEP6("ВСЕГО РАСХОДОВ",r.te+r.skOut-r.trNetto,null,null,null,null,""));
+  rows.push(SEP6("ВСЕГО РАСХОДОВ",r.te+r.skOut-r.trNetto,null,r.vVatTotalOut,null,r.tVatTotalOut,""));
   rows.push(SEP6(r.cOk?"Контрольная сумма":"Контрольная сумма ⚠",r.ctrl,null,null,null,null,r.cOk?"g":"r"));
 
   // ─── Свод НДС (справа) ──────────────────────────────────────────────────
-  // ВСИП: 3144 = output VAT начисленный (к уплате); 3147 = возврат входящего НДС
-  // ТТ:   3144 = входящий НДС в расходах (невозмещаемый, в колонке НДС расходов)
-  var vatExtV=r.vatPayV-r.trVatV;   // ВСИП output VAT по внешним проектам
-  var vatExtT=r.vatPayT-r.trVatT;   // ТТ input VAT по внешним проектам
+  // vVatTotalIn  = 3144 (output VAT) → из доходных строк проектов → к уплате
+  // vVatTotalOut = 3147 (input VAT)  → из расходных строк проектов → к возмещению
+  // БАЛАНС = к уплате − к возмещению (>0 красный = платим; <0 зелёный = возмещение)
+  var vatBalV=r.vVatTotalIn-r.vVatTotalOut;
+  var vatBalT=r.tVatTotalIn-r.tVatTotalOut;
   var vst=[];
   vst.push(VSPH());
-  vst.push(VSPR("НДС от поступлений (внешних)",vatExtV,0,false,""));
-  vst.push(VSPR("НДС от поступлений (внутренних)",r.trVatV,0,false,""));
-  vst.push(VSPR("Итого НДС к уплате",r.vatPayV,0,true,""));
+  vst.push(VSPR("НДС от поступлений (внешних)",r.vVatTotalIn,r.tVatTotalIn,false,""));
+  vst.push(VSPR("НДС от поступлений (трансферы)",r.vVatTr,r.tVatTr,false,""));
+  vst.push(VSPR("Итого НДС к уплате",r.vVatTotalIn+r.vVatTr,r.tVatTotalIn+r.tVatTr,true,""));
   vst.push(VSPB());
-  vst.push(VSPR("НДС от платежей (внешних)",r.vatRefV,vatExtT,false,""));
-  vst.push(VSPR("НДС от платежей (внутренних)",0,r.trVatT,false,""));
-  vst.push(VSPR("Итого НДС к возмещению",r.vatRefV,r.vatPayT,true,""));
+  vst.push(VSPR("НДС от платежей (внешних)",r.vVatTotalOut,r.tVatTotalOut,false,""));
+  vst.push(VSPR("НДС от платежей (трансферы)",0,0,false,""));
+  vst.push(VSPR("Итого НДС к возмещению",r.vVatTotalOut,r.tVatTotalOut,true,""));
   vst.push(VSPB());
-  var bCls=r.vatBalV>0?"r":r.vatBalV<0?"g":"";
-  vst.push(VSPR("БАЛАНС НДС",r.vatBalV,0,true,bCls));
+  var bCls=vatBalV>0?"r":vatBalV<0?"g":"";
+  vst.push(VSPR("БАЛАНС НДС",vatBalV,vatBalT,true,bCls));
 
   var st=live?'<span style="color:#16a34a">● live · '+r.cnt+' тр.</span>':'<span style="color:#9ca3af">данные на '+r.d1+'</span>';
   return'<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e5e7eb;">'
@@ -455,7 +437,7 @@ function load(reset){
   Promise.all([
     loadAll("transaction"),
     loadAll("categories"),
-    loadAll("transaction_pls",{"filter[category_id]":"3144,3147","filter[date][start_date]":rng.s0,"filter[date][end_date]":rng.s1}).catch(function(){return[];})
+    loadAll("transaction_pls",{"filter[category_id]":"3144,3147"}).catch(function(){return[];})
   ]).then(function(res){
     var txAll=res[0],cats=res[1],pls=res[2];
     var rng=getRange();
