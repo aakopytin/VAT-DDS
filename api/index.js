@@ -413,8 +413,7 @@ function render(r,live){
   if(r.trOut_v||r.trOut_t){
     rows.push(TR6("Нетто переводы списание",r.trOut_v+r.trOut_t,r.trOut_v,null,r.trOut_t,null,"",""));
   }
-  rows.push(SEP6("Нетто переводы",r.trNetto,(r.trIn_v-r.trOut_v),null,(r.trIn_t-r.trOut_t),null,r.trNetto>0?"g":r.trNetto<0?"r":""));
-  if(r.vVatTr||r.tVatTr)rows.push(TR6("НДС (трансферы/прочее)",r.vVatTr+r.tVatTr,r.vVatTr,null,r.tVatTr,null,"m",1));
+  rows.push(SEP6("Нетто переводы",r.trNetto,(r.trIn_v-r.trOut_v),r.vVatTr||null,(r.trIn_t-r.trOut_t),r.tVatTr||null,r.trNetto>0?"g":r.trNetto<0?"r":""));
 
   if(r.skIn||r.skOut){
     rows.push(SEC("Финансирование (займы)"));
