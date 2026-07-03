@@ -219,6 +219,10 @@ function calc(txMonth,txAll,cats,plsData,rng){
         else{if(isV)vPo+=out;if(isT)tPo+=out;poDet.push({date:tx.date,cat:cn,out:out});}
       }
       else if(cat==="po"){if(isV)vPo+=out;if(isT)tPo+=out;poDet.push({date:tx.date,cat:cn,out:out});}
+      else if(cat==="pjOut"){
+        if(pOk&&!pOff){if(isV){vPjOut+=out;if(gp)poP_v[gp]=(poP_v[gp]||0)+out;}if(isT){tPjOut+=out;if(gp)poP_t[gp]=(poP_t[gp]||0)+out;}}
+        else{if(isV)vPjOutOff+=out;if(isT)tPjOutOff+=out;}
+      }
       else if(pOff){if(isV)vPjOutOff+=out;if(isT)tPjOutOff+=out;}
       else{if(isV){vPjOut+=out;if(gp&&pOk)poP_v[gp]=(poP_v[gp]||0)+out;}if(isT){tPjOut+=out;if(gp&&pOk)poP_t[gp]=(poP_t[gp]||0)+out;}}
     }
@@ -342,9 +346,9 @@ function calc(txMonth,txAll,cats,plsData,rng){
 }
 
 function HDR(){
-  var sb="width:36px;padding:1px 2px;font-size:10px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap;overflow:hidden";
-  var sn="width:29px;padding:1px 2px;font-size:10px;font-weight:700;color:#9ca3af;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap;overflow:hidden";
-  var sl="width:54px;padding:1px 2px;font-size:10px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;overflow:hidden;white-space:nowrap;text-overflow:ellipsis";
+  var sb="width:22px;padding:1px 2px;font-size:10px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap;overflow:hidden";
+  var sn="width:17px;padding:1px 2px;font-size:10px;font-weight:700;color:#9ca3af;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap;overflow:hidden";
+  var sl="width:32px;padding:1px 2px;font-size:10px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;overflow:hidden;white-space:nowrap;text-overflow:ellipsis";
   return"<tr><td style='"+sl+"'></td><td style='"+sb+"'>Итого</td><td style='"+sb+"'>ВСИП</td><td style='"+sn+"'>НДС</td><td style='"+sb+"'>ТТ</td><td style='"+sn+"'>НДС</td></tr>";
 }
 function TR6(l,tot,v,nv,t,nt,cls,ind){
@@ -365,16 +369,16 @@ function SEC(l){return"<tr><td colspan='6' style='padding:5px 4px 1px;font-size:
 
 // ─── Свод НДС — вспомогательные функции ──────────────────────────────────
 function VSPH(){
-  var s="width:64px;padding:1px 2px;font-size:11px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap";
-  var sl="padding:1px 2px;font-size:11px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af";
+  var s="width:64px;padding:1px 2px;font-size:12px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap";
+  var sl="padding:1px 2px;font-size:12px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af";
   return"<tr><td style='"+sl+"'></td><td style='"+s+"'>ВСИП</td><td style='"+s+"'>ТТ</td><td style='"+s+"'>Итого</td></tr>";
 }
 function VSPR(l,v,t,bold,cls){
   var tot=(v||0)+(t||0);
   var brd=bold?";border-top:1px solid #d1d5db":"";
   var fw=bold?";font-weight:700":"";
-  var sl="padding:1px 2px;font-size:12px;color:#1f2937"+fw+brd;
-  var sr="padding:1px 2px;text-align:right;font-size:12px;white-space:nowrap;color:#1f2937"+fw+brd;
+  var sl="padding:1px 2px;font-size:13px;color:#1f2937"+fw+brd;
+  var sr="padding:1px 2px;text-align:right;font-size:13px;white-space:nowrap;color:#1f2937"+fw+brd;
   var cn=cls==="r"&&tot>0?";color:#dc2626":cls==="g"&&tot<0?";color:#16a34a":"";
   return"<tr><td style='"+sl+"'>"+l+"</td><td style='"+sr+"'>"+fmt(v||0)+"</td><td style='"+sr+"'>"+fmt(t||0)+"</td><td style='"+sr+cn+"'>"+fmt(tot)+"</td></tr>";
 }
