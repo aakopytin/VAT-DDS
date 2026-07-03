@@ -160,6 +160,19 @@ function calc(txMonth,txAll,cats,plsData,rng){
   var vSkIn=0,tSkIn=0,vSkOut=0,tSkOut=0;
   var poDet=[];
 
+  // Pre-pass: determine which transfer reference_ids are internal (both legs same org)
+  var trRef={};
+  txMonth.forEach(function(tx){
+    var ref=tx.reference_id;if(!ref)return;
+    var aid=tx.org_account_id,cn=cMap[tx.category_id]||"";
+    if(AC[cn]!=="tr")return;
+    var isV=!!VSIP[aid],isT=!!TT[aid];if(!isV&&!isT)return;
+    if(!trRef[ref])trRef[ref]={vIn:0,vOut:0,tIn:0,tOut:0};
+    var inc=_ddsNum(tx.income)||0,out=_ddsNum(tx.outcome)||0;
+    if(isV){trRef[ref].vIn+=inc;trRef[ref].vOut+=out;}
+    if(isT){trRef[ref].tIn+=inc;trRef[ref].tOut+=out;}
+  });
+
   txMonth.forEach(function(tx){
     var aid=tx.org_account_id,cn=cMap[tx.category_id]||"";
     var pid=tx.project_id||0;
@@ -171,8 +184,12 @@ function calc(txMonth,txAll,cats,plsData,rng){
     var cat=AC[cn];
 
     if(cat==="tr"){
-      if(isV){trIn_v+=inc;trOut_v+=out;}
-      if(isT){trIn_t+=inc;trOut_t+=out;}
+      var ref=tx.reference_id,rf=ref?trRef[ref]:null;
+      // skip internal transfers: both legs of same org present in period
+      var intV=rf&&rf.vIn>0&&rf.vOut>0&&!rf.tIn&&!rf.tOut;
+      var intT=rf&&rf.tIn>0&&rf.tOut>0&&!rf.vIn&&!rf.vOut;
+      if(isV&&!intV){trIn_v+=inc;trOut_v+=out;}
+      if(isT&&!intT){trIn_t+=inc;trOut_t+=out;}
       return;
     }
     if(inc>0){
@@ -223,7 +240,7 @@ function calc(txMonth,txAll,cats,plsData,rng){
   });
 
   var vVatPiP={},tVatPiP={},vVatPoP={},tVatPoP={};
-  var vVatTr=0,tVatTr=0;
+  var vVatTr=0,tVatTr=0,vVatTrIn=0,tVatTrIn=0,vVatTrOut=0,tVatTrOut=0;
   var vVatRefV=0,tVatRefV=0;
   var vVatOffV=0,tVatOffV=0;
   var vVatTotalIn=0,tVatTotalIn=0,vVatTotalOut=0,tVatTotalOut=0;
@@ -242,7 +259,7 @@ function calc(txMonth,txAll,cats,plsData,rng){
     if(is3147){
       // НДС внутри поступлений: per-project → piP; refund-only → refV; else → vVatTr
       var inc47=_ddsNum(p.income)||0;if(!inc47)return;
-      if(!pOk){if(p.org_id===1){if(refPG_v[gp]){vVatRefV+=inc47;vVatTotalIn+=inc47;}else{vVatTr+=inc47;}}else if(p.org_id===2){if(refPG_t[gp]){tVatRefV+=inc47;tVatTotalIn+=inc47;}else{tVatTr+=inc47;}}return;}
+      if(!pOk){if(p.org_id===1){if(refPG_v[gp]){vVatRefV+=inc47;vVatTotalIn+=inc47;}else if(pid===27){vVatTrIn+=inc47;vVatTr+=inc47;}else{vVatTr+=inc47;}}else if(p.org_id===2){if(refPG_t[gp]){tVatRefV+=inc47;tVatTotalIn+=inc47;}else if(pid===27){tVatTrIn+=inc47;tVatTr+=inc47;}else{tVatTr+=inc47;}}return;}
       if(p.org_id===1){
         if((piP_v[gp]||0)>0){vVatPiP[gp]=(vVatPiP[gp]||0)+inc47;}
         else if(refPG_v[gp]){vVatRefV+=inc47;}
@@ -259,7 +276,7 @@ function calc(txMonth,txAll,cats,plsData,rng){
       // НДС внутри платежей: per-project → poP; pid=27 → vVatTr; прочие → vVatOffV
       var out44=_ddsNum(p.outcome)||0;if(!out44)return;
       if(!pOk){
-        if(pid===27){if(p.org_id===1)vVatTr+=out44;else if(p.org_id===2)tVatTr+=out44;}
+        if(pid===27){if(p.org_id===1){vVatTrOut+=out44;vVatTr+=out44;}else if(p.org_id===2){tVatTrOut+=out44;tVatTr+=out44;}}
         else{
           if(p.org_id===1){
             vVatOffV+=out44;vVatTotalOut+=out44;
@@ -311,7 +328,7 @@ function calc(txMonth,txAll,cats,plsData,rng){
     trIn_v:trIn_v,trOut_v:trOut_v,trIn_t:trIn_t,trOut_t:trOut_t,trNetto:trNetto,
     vSkIn:vSkIn,tSkIn:tSkIn,skIn:skIn,vSkOut:vSkOut,tSkOut:tSkOut,skOut:skOut,
     vVatPiP:vVatPiP,tVatPiP:tVatPiP,vVatPoP:vVatPoP,tVatPoP:tVatPoP,
-    vVatTr:vVatTr,tVatTr:tVatTr,vVatRefV:vVatRefV,tVatRefV:tVatRefV,
+    vVatTr:vVatTr,tVatTr:tVatTr,vVatTrIn:vVatTrIn,tVatTrIn:tVatTrIn,vVatTrOut:vVatTrOut,tVatTrOut:tVatTrOut,vVatRefV:vVatRefV,tVatRefV:tVatRefV,
     vVatOffV:vVatOffV,tVatOffV:tVatOffV,
     vVatZp:vVatZp,tVatZp:tVatZp,vVatKm:vVatKm,tVatKm:tVatKm,vVatBk:vVatBk,tVatBk:tVatBk,
     vVatIns:vVatIns,tVatIns:tVatIns,vVatLz:vVatLz,tVatLz:tVatLz,vVatAr:vVatAr,tVatAr:tVatAr,
@@ -413,10 +430,10 @@ function render(r,live){
 
   rows.push(SEC("Переводы между счетами"));
   if(r.trIn_v||r.trIn_t){
-    rows.push(TR6("Получено",r.trIn_v+r.trIn_t,r.trIn_v,null,r.trIn_t,null,"g",1));
+    rows.push(TR6("Получено",r.trIn_v+r.trIn_t,r.trIn_v,r.vVatTrIn||null,r.trIn_t,r.tVatTrIn||null,"g",1));
   }
   if(r.trOut_v||r.trOut_t){
-    rows.push(TR6("Списано",r.trOut_v+r.trOut_t,r.trOut_v,null,r.trOut_t,null,"",1));
+    rows.push(TR6("Списано",r.trOut_v+r.trOut_t,r.trOut_v,r.vVatTrOut||null,r.trOut_t,r.tVatTrOut||null,"",1));
   }
   rows.push(SEP6("Нетто переводы",r.trNetto,(r.trIn_v-r.trOut_v),r.vVatTr||null,(r.trIn_t-r.trOut_t),r.tVatTr||null,r.trNetto>0?"g":r.trNetto<0?"r":""));
 
