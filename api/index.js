@@ -55,9 +55,9 @@ return `<!DOCTYPE html>
 <title>ДДС</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:12px;background:#f8f9fd;color:#111827;padding:10px}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:12px;background:#f8f9fd;color:#111827;padding:8px}
 table{width:100%;border-collapse:collapse}
-td{padding:3px 5px}
+td{padding:2px 3px}
 details summary{font-size:10px;color:#9ca3af;cursor:pointer;padding:4px 0}
 details table td{font-size:10px;color:#555;padding:2px 4px}
 </style>
@@ -294,26 +294,26 @@ function calc(txMonth,txAll,cats,plsData,rng){
 }
 
 function HDR(){
-  var sb="padding:3px 5px;font-size:10px;font-weight:600;color:#6b7280;border-bottom:2px solid #d1d5db;text-align:right;white-space:nowrap";
-  var sl="padding:3px 5px;font-size:10px;font-weight:600;color:#6b7280;border-bottom:2px solid #d1d5db";
-  var sn=sb+";color:#bbb";
+  var sb="padding:2px 4px;font-size:10px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap";
+  var sl="padding:2px 4px;font-size:10px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af";
+  var sn=sb+";color:#9ca3af";
   return"<tr><td style='"+sl+"'></td><td style='"+sb+"'>Итого</td><td style='"+sb+"'>ВСИП</td><td style='"+sn+"'>НДС</td><td style='"+sb+"'>ТТ</td><td style='"+sn+"'>НДС</td></tr>";
 }
 function TR6(l,tot,v,nv,t,nt,cls,ind){
-  var cn="";if(cls==="g"&&(tot||0)>0)cn="color:#16a34a";if(cls==="r"&&(tot||0)<0)cn="color:#dc2626";if(cls==="m")cn="color:#9ca3af";
-  var sl="padding:3px 5px"+(ind?";padding-left:14px":"");
-  var sr="padding:3px 5px;text-align:right;white-space:nowrap";
+  var cn="";if(cls==="g"&&(tot||0)>0)cn="color:#16a34a";if(cls==="r"&&(tot||0)<0)cn="color:#dc2626";if(cls==="m")cn="color:#6b7280";
+  var sl="padding:2px 4px;color:#1f2937;font-size:11px"+(ind?";padding-left:12px":"");
+  var sr="padding:2px 4px;text-align:right;white-space:nowrap;font-size:11px;color:#1f2937";
   var sc=sr+(cn?";"+cn:"");
-  var sn=sr+";color:#9ca3af;font-size:11px";
+  var sn="padding:2px 4px;text-align:right;white-space:nowrap;font-size:10px;color:#6b7280";
   return"<tr><td style='"+sl+"'>"+l+"</td><td style='"+sc+"'>"+fmt(tot)+"</td><td style='"+sr+"'>"+fmt(v)+"</td><td style='"+sn+"'>"+fmt(nv)+"</td><td style='"+sr+"'>"+fmt(t)+"</td><td style='"+sn+"'>"+fmt(nt)+"</td></tr>";
 }
 function SEP6(l,tot,v,nv,t,nt,cls){
   var cn="";if(cls==="g"&&(tot||0)>0)cn="color:#16a34a";if(cls==="r"&&(tot||0)<0)cn="color:#dc2626";
-  var s="padding:3px 5px;font-weight:600;border-top:1px solid #e5e7eb";
-  var sr=s+";text-align:right;white-space:nowrap";var sc=sr+(cn?";"+cn:"");var sn=sr+";color:#9ca3af;font-size:11px";
+  var s="padding:2px 4px;font-weight:700;font-size:11px;color:#111827;border-top:1px solid #d1d5db";
+  var sr=s+";text-align:right;white-space:nowrap";var sc=sr+(cn?";"+cn:"");var sn=sr+";color:#6b7280;font-weight:400;font-size:10px";
   return"<tr><td style='"+s+"'>"+l+"</td><td style='"+sc+"'>"+fmt(tot)+"</td><td style='"+sr+"'>"+fmt(v)+"</td><td style='"+sn+"'>"+fmt(nv)+"</td><td style='"+sr+"'>"+fmt(t)+"</td><td style='"+sn+"'>"+fmt(nt)+"</td></tr>";
 }
-function SEC(l){return"<tr><td colspan='6' style='padding:6px 5px 2px;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;border-top:1px solid #e5e7eb'>"+l+"</td></tr>";}
+function SEC(l){return"<tr><td colspan='6' style='padding:5px 4px 1px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:#6b7280;border-top:1px solid #e5e7eb'>"+l+"</td></tr>";}
 
 function render(r,live){
   var rows=[];rows.push(HDR());
