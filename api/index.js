@@ -341,7 +341,7 @@ function calc(txMonth,txAll,cats,plsData,rng){
 function HDR(){
   var sb="width:60px;padding:1px 2px;font-size:9px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap;overflow:hidden";
   var sn="width:48px;padding:1px 2px;font-size:9px;font-weight:700;color:#9ca3af;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap;overflow:hidden";
-  var sl="width:110px;padding:1px 2px;font-size:9px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;overflow:hidden;white-space:nowrap;text-overflow:ellipsis";
+  var sl="width:90px;padding:1px 2px;font-size:9px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;overflow:hidden;white-space:nowrap;text-overflow:ellipsis";
   return"<tr><td style='"+sl+"'></td><td style='"+sb+"'>Итого</td><td style='"+sb+"'>ВСИП</td><td style='"+sn+"'>НДС</td><td style='"+sb+"'>ТТ</td><td style='"+sn+"'>НДС</td></tr>";
 }
 function TR6(l,tot,v,nv,t,nt,cls,ind){
@@ -362,7 +362,7 @@ function SEC(l){return"<tr><td colspan='6' style='padding:5px 4px 1px;font-size:
 
 // ─── Свод НДС — вспомогательные функции ──────────────────────────────────
 function VSPH(){
-  var s="width:54px;padding:1px 2px;font-size:9px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap";
+  var s="width:64px;padding:1px 2px;font-size:9px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap";
   var sl="padding:1px 2px;font-size:9px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af";
   return"<tr><td style='"+sl+"'></td><td style='"+s+"'>ВСИП</td><td style='"+s+"'>ТТ</td><td style='"+s+"'>Итого</td></tr>";
 }
@@ -435,7 +435,7 @@ function render(r,live){
   if(r.trOut_v||r.trOut_t){
     rows.push(TR6("Списано",r.trOut_v+r.trOut_t,r.trOut_v,r.vVatTrOut||null,r.trOut_t,r.tVatTrOut||null,"",1));
   }
-  rows.push(SEP6("Нетто переводы",r.trNetto,(r.trIn_v-r.trOut_v),r.vVatTr||null,(r.trIn_t-r.trOut_t),r.tVatTr||null,r.trNetto>0?"g":r.trNetto<0?"r":""));
+  rows.push(SEP6("Нетто переводы",r.trNetto,(r.trIn_v-r.trOut_v),(r.vVatTrIn-r.vVatTrOut)||null,(r.trIn_t-r.trOut_t),(r.tVatTrIn-r.tVatTrOut)||null,r.trNetto>0?"g":r.trNetto<0?"r":""));
 
   if(r.skIn||r.skOut){
     rows.push(SEC("Финансирование (займы)"));
@@ -444,25 +444,28 @@ function render(r,live){
     rows.push(SEP6("Нетто займы",r.skIn-r.skOut,r.vSkIn-r.vSkOut,null,r.tSkIn-r.tSkOut,null,r.skIn-r.skOut>0?"g":r.skIn-r.skOut<0?"r":""));
   }
 
-  rows.push(SEP6("ВСЕГО РАСХОДОВ",r.te+r.skOut-r.trNetto,null,(r.vVatTotalOut+r.vVatOffV)||null,null,(r.tVatTotalOut+r.tVatOffV)||null,""));
+  rows.push(SEP6("ВСЕГО РАСХОДОВ",r.te+r.skOut-r.trNetto,null,r.vVatTotalOut||null,null,r.tVatTotalOut||null,""));
   rows.push(SEP6(r.cOk?"Контрольная сумма":"Контрольная сумма ⚠",r.ctrl,r.vCtrl,null,r.tCtrl,null,r.cOk?"g":"r"));
 
   // ─── Свод НДС (справа) ──────────────────────────────────────────────────
-  // vVatTotalIn  = 3147 known-project → к уплате; vVatTr = прочие/трансферы
-  // vVatTotalOut = 3144 known-project; vVatOffV = 3144 офисные (неизвестный проект)
-  // БАЛАНС = к уплате − к возмещению (>0 красный = платим; <0 зелёный = возмещение)
-  var vatTotOut_v=r.vVatTotalOut+r.vVatOffV;
-  var vatTotOut_t=r.tVatTotalOut+r.tVatOffV;
+  // К уплате  = vVatTotalIn (3147 project income)
+  // К возмещению = vVatTotalOut (3144 project+office; vVatOffV уже внутри)
+  //              + vVatTrNet (нетто НДС по трансферам: уплачено − получено)
+  // БАЛАНС = К уплате − К возмещению (>0 красный = к уплате; <0 зелёный = возмещение)
+  var vVatTrNet=r.vVatTrOut-r.vVatTrIn;   // >0 = нетто отток ВСИП
+  var tVatTrNet=r.tVatTrOut-r.tVatTrIn;
+  var vatTotOut_v=r.vVatTotalOut+vVatTrNet;
+  var vatTotOut_t=r.tVatTotalOut+tVatTrNet;
   var vatBalV=r.vVatTotalIn-vatTotOut_v;
   var vatBalT=r.tVatTotalIn-vatTotOut_t;
   var vst=[];
   vst.push(VSPH());
   vst.push(VSPR("НДС поступления",r.vVatTotalIn,r.tVatTotalIn,false,""));
-  vst.push(VSPR("НДС прочие/тр.",r.vVatTr,r.tVatTr,false,""));
-  vst.push(VSPR("К уплате",r.vVatTotalIn+r.vVatTr,r.tVatTotalIn+r.tVatTr,true,""));
+  vst.push(VSPR("К уплате",r.vVatTotalIn,r.tVatTotalIn,true,""));
   vst.push(VSPB());
-  vst.push(VSPR("НДС платежи",r.vVatTotalOut,r.tVatTotalOut,false,""));
+  vst.push(VSPR("НДС проекты",r.vVatTotalOut-r.vVatOffV,r.tVatTotalOut-r.tVatOffV,false,""));
   vst.push(VSPR("НДС офисные",r.vVatOffV,r.tVatOffV,false,""));
+  vst.push(VSPR("НДС трансф.",vVatTrNet,tVatTrNet,false,""));
   vst.push(VSPR("К возмещению",vatTotOut_v,vatTotOut_t,true,""));
   vst.push(VSPB());
   var bCls=vatBalV>0?"r":vatBalV<0?"g":"";
