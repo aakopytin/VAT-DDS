@@ -208,8 +208,8 @@ function calc(txMonth,txAll,cats,plsData,rng){
   });
 
   // ─── НДС из transaction_pls ──────────────────────────────────────────────
-  // category_id=3144: НДС к уплате (outcome) → ДОХОДНАЯ строка (output VAT в составе поступлений)
-  // category_id=3147: Возврат НДС (income)   → РАСХОДНАЯ строка (input VAT в составе платежей)
+  // category_id=3147: Возврат НДС (поле income)  → ДОХОДНАЯ строка (НДС внутри поступления)
+  // category_id=3144: НДС к уплате (поле outcome) → РАСХОДНАЯ строка (НДС внутри платежа)
   // !pOk → трансферы/прочее → vVatTr / tVatTr
 
   var vVatPiP={},tVatPiP={},vVatPoP={},tVatPoP={};
@@ -223,19 +223,19 @@ function calc(txMonth,txAll,cats,plsData,rng){
     var pid=p.project_id||0;
     var gp=(pid&&PG[pid])?PG[pid]:pid;
     var pOk=gp&&!!PN[gp];
-    if(is3144){
-      // output VAT → income rows (НДС в составе поступлений проекта)
-      var out44=_ddsNum(p.outcome)||0;if(!out44)return;
-      if(!pOk){if(p.org_id===1)vVatTr+=out44;else if(p.org_id===2)tVatTr+=out44;return;}
-      if(p.org_id===1){vVatPiP[gp]=(vVatPiP[gp]||0)+out44;vVatTotalIn+=out44;}
-      else if(p.org_id===2){tVatPiP[gp]=(tVatPiP[gp]||0)+out44;tVatTotalIn+=out44;}
-    }
     if(is3147){
-      // input VAT → expense rows (НДС в составе платежей проекта)
+      // НДС внутри поступлений → доходные строки
       var inc47=_ddsNum(p.income)||0;if(!inc47)return;
       if(!pOk){if(p.org_id===1)vVatTr+=inc47;else if(p.org_id===2)tVatTr+=inc47;return;}
-      if(p.org_id===1){vVatPoP[gp]=(vVatPoP[gp]||0)+inc47;vVatTotalOut+=inc47;}
-      else if(p.org_id===2){tVatPoP[gp]=(tVatPoP[gp]||0)+inc47;tVatTotalOut+=inc47;}
+      if(p.org_id===1){vVatPiP[gp]=(vVatPiP[gp]||0)+inc47;vVatTotalIn+=inc47;}
+      else if(p.org_id===2){tVatPiP[gp]=(tVatPiP[gp]||0)+inc47;tVatTotalIn+=inc47;}
+    }
+    if(is3144){
+      // НДС внутри платежей → расходные строки
+      var out44=_ddsNum(p.outcome)||0;if(!out44)return;
+      if(!pOk){if(p.org_id===1)vVatTr+=out44;else if(p.org_id===2)tVatTr+=out44;return;}
+      if(p.org_id===1){vVatPoP[gp]=(vVatPoP[gp]||0)+out44;vVatTotalOut+=out44;}
+      else if(p.org_id===2){tVatPoP[gp]=(tVatPoP[gp]||0)+out44;tVatTotalOut+=out44;}
     }
   });
 
@@ -378,8 +378,8 @@ function render(r,live){
   rows.push(SEP6(r.cOk?"Контрольная сумма":"Контрольная сумма ⚠",r.ctrl,null,null,null,null,r.cOk?"g":"r"));
 
   // ─── Свод НДС (справа) ──────────────────────────────────────────────────
-  // vVatTotalIn  = 3144 (output VAT) → из доходных строк проектов → к уплате
-  // vVatTotalOut = 3147 (input VAT)  → из расходных строк проектов → к возмещению
+  // vVatTotalIn  = 3147 (income) → доходные строки → НДС с клиентов → к уплате в бюджет
+  // vVatTotalOut = 3144 (outcome) → расходные строки → НДС подрядчикам → к возмещению
   // БАЛАНС = к уплате − к возмещению (>0 красный = платим; <0 зелёный = возмещение)
   var vatBalV=r.vVatTotalIn-r.vVatTotalOut;
   var vatBalT=r.tVatTotalIn-r.tVatTotalOut;
