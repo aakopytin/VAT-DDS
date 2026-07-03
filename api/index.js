@@ -178,7 +178,7 @@ function calc(txMonth,txAll,cats,plsData,rng){
     if(inc>0){
       if(cat==="pr"){if(isV)vPr+=inc;if(isT)tPr+=inc;}
       else if(cat==="pjIn"&&pOk){if(isV){vPjIn+=inc;piP_v[gp]=(piP_v[gp]||0)+inc;}if(isT){tPjIn+=inc;piP_t[gp]=(piP_t[gp]||0)+inc;}}
-      else if(cat==="refund"){if(isV){vRefund+=inc;if(pOk)refPG_v[gp]=1;}if(isT){tRefund+=inc;if(pOk)refPG_t[gp]=1;}}
+      else if(cat==="refund"){if(isV){vRefund+=inc;if(pOk||pOff)refPG_v[gp]=1;}if(isT){tRefund+=inc;if(pOk||pOff)refPG_t[gp]=1;}}
       else if(cat==="skIn"){if(isV)vSkIn+=inc;if(isT)tSkIn+=inc;}
       else{if(isV)vPoIn+=inc;if(isT)tPoIn+=inc;}
     }
@@ -227,7 +227,7 @@ function calc(txMonth,txAll,cats,plsData,rng){
     if(is3147){
       // НДС внутри поступлений: per-project → piP; refund-only → refV; else → vVatTr
       var inc47=_ddsNum(p.income)||0;if(!inc47)return;
-      if(!pOk){if(p.org_id===1)vVatTr+=inc47;else if(p.org_id===2)tVatTr+=inc47;return;}
+      if(!pOk){if(p.org_id===1){if(refPG_v[gp]){vVatRefV+=inc47;vVatTotalIn+=inc47;}else{vVatTr+=inc47;}}else if(p.org_id===2){if(refPG_t[gp]){tVatRefV+=inc47;tVatTotalIn+=inc47;}else{tVatTr+=inc47;}}return;}
       if(p.org_id===1){
         if((piP_v[gp]||0)>0){vVatPiP[gp]=(vVatPiP[gp]||0)+inc47;}
         else if(refPG_v[gp]){vVatRefV+=inc47;}
