@@ -264,7 +264,11 @@ function calc(txMonth,txAll,cats,plsData,rng){
       // НДС поступлений: pid=27 всегда→trIn; per-project→piP; refund→refV; else→vVatTr
       var inc47=_ddsNum(p.income)||0;if(!inc47)return;
       // pid=27 must be checked BEFORE pOk — project 27 may exist in PN
-      if(pid===27){if(p.org_id===1){vVatTrIn+=inc47;vVatTr+=inc47;}else if(p.org_id===2){tVatTrIn+=inc47;tVatTr+=inc47;}return;}
+      if(pid===27){
+        if(p.org_id===1){var rf27a=p.reference_id?trRef[p.reference_id]:null;var intV27a=rf27a&&rf27a.vIn>0&&rf27a.vOut>0&&!rf27a.tIn&&!rf27a.tOut;if(!intV27a){vVatTrIn+=inc47;vVatTr+=inc47;}}
+        else if(p.org_id===2){tVatTrIn+=inc47;tVatTr+=inc47;}
+        return;
+      }
       if(!pOk){if(p.org_id===1){if(refPG_v[gp]){vVatRefV+=inc47;vVatTotalIn+=inc47;}else{vVatTr+=inc47;}}else if(p.org_id===2){if(refPG_t[gp]){tVatRefV+=inc47;tVatTotalIn+=inc47;}else{tVatTr+=inc47;}}return;}
       if(p.org_id===1){
         if((piP_v[gp]||0)>0){vVatPiP[gp]=(vVatPiP[gp]||0)+inc47;}
@@ -282,7 +286,11 @@ function calc(txMonth,txAll,cats,plsData,rng){
       // НДС платежей: pid=27 всегда→trOut; per-project→poP; прочие→vVatOffV
       var out44=_ddsNum(p.outcome)||0;if(!out44)return;
       // pid=27 must be checked BEFORE pOk — project 27 may exist in PN
-      if(pid===27){if(p.org_id===1){vVatTrOut+=out44;vVatTr+=out44;}else if(p.org_id===2){tVatTrOut+=out44;tVatTr+=out44;}return;}
+      if(pid===27){
+        if(p.org_id===1){var rf27b=p.reference_id?trRef[p.reference_id]:null;var intV27b=rf27b&&rf27b.vIn>0&&rf27b.vOut>0&&!rf27b.tIn&&!rf27b.tOut;if(!intV27b){vVatTrOut+=out44;vVatTr+=out44;}}
+        else if(p.org_id===2){tVatTrOut+=out44;tVatTr+=out44;}
+        return;
+      }
       if(!pOk){
         {
           if(p.org_id===1){
