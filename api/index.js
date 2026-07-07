@@ -69,6 +69,7 @@ details table td{font-size:11px;color:#555;padding:2px 4px}
 <div id="root" style="color:#9ca3af">ДДС — загрузка…</div>
 <script>
 (function(){
+var adjPrev={v:0,t:0},adjCurr={v:0,t:0},lastVatBalV=0,lastVatBalT=0;
 var DOMAIN="${esc(d)}";
 var ACCOUNT_ID="${esc(a)}";
 var TOKEN="${esc(t)}";
@@ -360,30 +361,30 @@ function calc(txMonth,txAll,cats,plsData,rng){
 }
 
 function HDR(){
-  var sb="width:9px;padding:1px 2px;font-size:11px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap;overflow:hidden";
-  var sn="width:7px;padding:1px 2px;font-size:11px;font-weight:700;color:#9ca3af;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap;overflow:hidden";
-  var sl="width:14px;padding:1px 2px;font-size:11px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;overflow:hidden;white-space:nowrap;text-overflow:ellipsis";
+  var sb="width:7px;padding:1px 2px;font-size:10px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap;overflow:hidden";
+  var sn="width:5px;padding:1px 2px;font-size:10px;font-weight:700;color:#9ca3af;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap;overflow:hidden";
+  var sl="width:11px;padding:1px 2px;font-size:10px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;overflow:hidden;white-space:nowrap;text-overflow:ellipsis";
   return"<tr><td style='"+sl+"'></td><td style='"+sb+"'>Итого</td><td style='"+sb+"'>ВСИП</td><td style='"+sn+"'>НДС</td><td style='"+sb+"'>ТТ</td><td style='"+sn+"'>НДС</td></tr>";
 }
 function TR6(l,tot,v,nv,t,nt,cls,ind){
   var cn="";if(cls==="g"&&(tot||0)>0)cn="color:#16a34a";if(cls==="r"&&(tot||0)<0)cn="color:#dc2626";if(cls==="m")cn="color:#6b7280";
-  var sl="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:1px 2px;color:#1f2937;font-size:12px"+(ind?";padding-left:8px":"");
-  var sr="padding:1px 2px;text-align:right;white-space:nowrap;font-size:12px;color:#1f2937";
+  var sl="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:1px 2px;color:#1f2937;font-size:11px"+(ind?";padding-left:8px":"");
+  var sr="padding:1px 2px;text-align:right;white-space:nowrap;font-size:11px;color:#1f2937";
   var sc=sr+(cn?";"+cn:"");
-  var sn="padding:1px 2px;text-align:right;white-space:nowrap;font-size:11px;color:#6b7280";
+  var sn="padding:1px 2px;text-align:right;white-space:nowrap;font-size:10px;color:#6b7280";
   return"<tr><td style='"+sl+"'>"+l+"</td><td style='"+sc+"'>"+fmt(tot)+"</td><td style='"+sr+"'>"+fmt(v)+"</td><td style='"+sn+"'>"+fmt(nv)+"</td><td style='"+sr+"'>"+fmt(t)+"</td><td style='"+sn+"'>"+fmt(nt)+"</td></tr>";
 }
 function SEP6(l,tot,v,nv,t,nt,cls){
   var cn="";if(cls==="g"&&(tot||0)>0)cn="color:#16a34a";if(cls==="r"&&(tot||0)<0)cn="color:#dc2626";
-  var s="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:1px 2px;font-weight:700;font-size:12px;color:#111827;border-top:1px solid #d1d5db";
-  var sr=s+";text-align:right;white-space:nowrap";var sc=sr+(cn?";"+cn:"");var sn=sr+";color:#6b7280;font-weight:400;font-size:11px";
+  var s="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:1px 2px;font-weight:700;font-size:11px;color:#111827;border-top:1px solid #d1d5db";
+  var sr=s+";text-align:right;white-space:nowrap";var sc=sr+(cn?";"+cn:"");var sn=sr+";color:#6b7280;font-weight:400;font-size:10px";
   return"<tr><td style='"+s+"'>"+l+"</td><td style='"+sc+"'>"+fmt(tot)+"</td><td style='"+sr+"'>"+fmt(v)+"</td><td style='"+sn+"'>"+fmt(nv)+"</td><td style='"+sr+"'>"+fmt(t)+"</td><td style='"+sn+"'>"+fmt(nt)+"</td></tr>";
 }
-function SEC(l){return"<tr><td colspan='6' style='padding:5px 4px 1px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:#6b7280;border-top:1px solid #e5e7eb'>"+l+"</td></tr>";}
+function SEC(l){return"<tr><td colspan='6' style='padding:5px 4px 1px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:#6b7280;border-top:1px solid #e5e7eb'>"+l+"</td></tr>";}
 
 // ─── Свод НДС — вспомогательные функции ──────────────────────────────────
 function VSPH(){
-  var s="width:55px;padding:1px 2px;font-size:13px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap";
+  var s="width:72px;padding:1px 2px;font-size:13px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap";
   var sl="padding:1px 2px;font-size:13px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af";
   return"<tr><td style='"+sl+"'></td><td style='"+s+"'>ВСИП</td><td style='"+s+"'>ТТ</td><td style='"+s+"'>Итого</td></tr>";
 }
@@ -391,8 +392,8 @@ function VSPR(l,v,t,bold,cls){
   var tot=(v||0)+(t||0);
   var brd=bold?";border-top:1px solid #d1d5db":"";
   var fw=bold?";font-weight:700":"";
-  var sl="padding:1px 2px;font-size:14px;color:#1f2937"+fw+brd;
-  var sr="padding:1px 2px;text-align:right;font-size:14px;white-space:nowrap;color:#1f2937"+fw+brd;
+  var sl="padding:1px 2px;font-size:13px;color:#1f2937"+fw+brd;
+  var sr="padding:1px 2px;text-align:right;font-size:13px;white-space:nowrap;color:#1f2937"+fw+brd;
   var cn="";
   if(bold&&cls==="r")cn=";color:#dc2626";
   else if(bold&&cls==="g")cn=";color:#16a34a";
@@ -400,6 +401,57 @@ function VSPR(l,v,t,bold,cls){
   return"<tr><td style='"+sl+cn+"'>"+l+"</td><td style='"+sr+cn+"'>"+fmt(v||0)+"</td><td style='"+sr+cn+"'>"+fmt(t||0)+"</td><td style='"+sr+cn+"'>"+fmt(tot)+"</td></tr>";
 }
 function VSPB(){return"<tr><td colspan='4' style='height:3px'></td></tr>";}
+function VSPKUP(l,v,t){
+  var tot=(v||0)+(t||0);
+  var sl="padding:1px 2px;font-size:12px;color:#6b7280";
+  var sr="padding:1px 2px;text-align:right;font-size:12px;white-space:nowrap";
+  function cell(val){
+    if(!val||val<=0)return'<td style="'+sr+'"><span style="color:#d1d5db">—</span></td>';
+    return'<td style="'+sr+';font-weight:700;color:#dc2626">'+fmt(val)+'</td>';
+  }
+  return'<tr><td style="'+sl+'">'+l+'</td>'+cell(v)+cell(t)+cell(tot)+'</tr>';
+}
+function VSPKREF(l,v,t){
+  var tot=(v||0)+(t||0);
+  var sl="padding:1px 2px;font-size:12px;color:#6b7280";
+  var sr="padding:1px 2px;text-align:right;font-size:12px;white-space:nowrap";
+  function cell(val){
+    if(!val||val>=0)return'<td style="'+sr+'"><span style="color:#d1d5db">—</span></td>';
+    return'<td style="'+sr+';font-weight:700;color:#16a34a">'+fmt(Math.abs(val))+'</td>';
+  }
+  return'<tr><td style="'+sl+'">'+l+'</td>'+cell(v)+cell(t)+cell(tot)+'</tr>';
+}
+function VSPCORR(l,idv,idt,adjV,adjT){
+  var idg=idv.replace('-v','-g');
+  var adjG=(adjV||0)+(adjT||0);
+  var sl="padding:1px 2px;font-size:12px;color:#374151";
+  var sr="padding:1px 2px;text-align:right;font-size:11px";
+  var inp="width:66px;font-size:11px;text-align:right;border:1px solid #d1d5db;border-radius:2px;padding:1px 3px;background:#fffef0";
+  return'<tr><td style="'+sl+'">'+l+'</td>'
+    +'<td style="'+sr+'"><input id="'+idv+'" type="number" step="1" value="'+( adjV||0)+'" style="'+inp+'"></td>'
+    +'<td style="'+sr+'"><input id="'+idt+'" type="number" step="1" value="'+( adjT||0)+'" style="'+inp+'"></td>'
+    +'<td id="'+idg+'" style="'+sr+'">'+( adjG?fmt(adjG):'—')+'</td>'
+    +'</tr>';
+}
+function VSPITOG(l,idv,idt,idg){
+  var brd=";border-top:1px solid #d1d5db";
+  var sl="padding:1px 2px;font-size:13px;font-weight:700;color:#111827"+brd;
+  var sr="padding:1px 2px;text-align:right;font-size:13px;font-weight:700;white-space:nowrap"+brd;
+  return'<tr><td style="'+sl+'">'+l+'</td>'
+    +'<td id="'+idv+'" style="'+sr+'">—</td>'
+    +'<td id="'+idt+'" style="'+sr+'">—</td>'
+    +'<td id="'+idg+'" style="'+sr+'">—</td>'
+    +'</tr>';
+}
+function VSPROWID(l,idv,idt,idg){
+  var sl="padding:1px 2px;font-size:12px;color:#6b7280";
+  var sr="padding:1px 2px;text-align:right;font-size:12px;white-space:nowrap";
+  return'<tr><td style="'+sl+'">'+l+'</td>'
+    +'<td id="'+idv+'" style="'+sr+'">—</td>'
+    +'<td id="'+idt+'" style="'+sr+'">—</td>'
+    +'<td id="'+idg+'" style="'+sr+'">—</td>'
+    +'</tr>';
+}
 
 function render(r,live){
   var rows=[];rows.push(HDR());
@@ -482,8 +534,10 @@ function render(r,live){
   var vatTotOut_t=r.tVatTotalOut+tVatTrNet;
   var vatBalV=r.vVatTotalIn-vatTotOut_v;
   var vatBalT=r.tVatTotalIn-vatTotOut_t;
+  lastVatBalV=vatBalV; lastVatBalT=vatBalT;
   var vst=[];
   vst.push(VSPH());
+  vst.push(VSPR("НДС Расчетный",vatBalV,vatBalT,false,""));
   vst.push(VSPR("НДС поступления",r.vVatTotalIn,r.tVatTotalIn,false,""));
   vst.push(VSPR("К уплате",r.vVatTotalIn,r.tVatTotalIn,true,"r"));
   vst.push(VSPB());
@@ -492,8 +546,15 @@ function render(r,live){
   vst.push(VSPR("НДС трансф.",vVatTrNet,tVatTrNet,false,""));
   vst.push(VSPR("К возмещению",vatTotOut_v,vatTotOut_t,true,"g"));
   vst.push(VSPB());
-  var bCls=vatBalV>0?"r":vatBalV<0?"g":"";
-  vst.push(VSPR("БАЛАНС",vatBalV,vatBalT,true,bCls));
+  vst.push(VSPR("Баланс",vatBalV,vatBalT,true,""));
+  vst.push(VSPKUP("  К уплате",vatBalV,vatBalT));
+  vst.push(VSPKREF("  К возмещению",vatBalV,vatBalT));
+  vst.push(VSPB());
+  vst.push(VSPCORR("Корр. прош. кв.","adj-vp","adj-tp",adjPrev.v,adjPrev.t));
+  vst.push(VSPCORR("Корр. тек. кв.","adj-vc","adj-tc",adjCurr.v,adjCurr.t));
+  vst.push(VSPITOG("Итоговый Баланс","itog-v","itog-t","itog-g"));
+  vst.push(VSPROWID("  К уплате","itog-pay-v","itog-pay-t","itog-pay-g"));
+  vst.push(VSPROWID("  К возмещению","itog-ref-v","itog-ref-t","itog-ref-g"));
 
   var st=live?'<span style="color:#16a34a">● live · '+r.cnt+' тр.</span>':'<span style="color:#9ca3af">данные на '+r.d1+'</span>';
   return'<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e5e7eb;">'
@@ -507,7 +568,7 @@ function render(r,live){
     +'<div style="display:flex;gap:8px;align-items:flex-start">'
     +'<div style="flex:1;min-width:0;overflow:hidden"><table style="table-layout:fixed;width:100%">'+rows.join('')+'</table></div>'
     +'<div style="flex-shrink:0">'
-    +'<div style="font-size:10px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;padding:1px 2px 2px">Свод НДС</div>'
+    +'<div style="font-size:13px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;padding:1px 2px 2px">Свод НДС</div>'
     +'<table style="border-collapse:collapse;table-layout:fixed">'+vst.join('')+'</table>'
     +'</div></div>'
     +'<div style="margin-top:5px;font-size:11px;color:#9ca3af">обновлено: '+new Date().toLocaleTimeString("ru-RU")+'</div>';
@@ -527,6 +588,31 @@ function renderPoDet(poDet){
   });
   d.appendChild(t);document.getElementById("root").appendChild(d);
 }
+function updateAdj(){
+  adjPrev.v=parseFloat(document.getElementById('adj-vp').value)||0;
+  adjPrev.t=parseFloat(document.getElementById('adj-tp').value)||0;
+  adjCurr.v=parseFloat(document.getElementById('adj-vc').value)||0;
+  adjCurr.t=parseFloat(document.getElementById('adj-tc').value)||0;
+  var gp=adjPrev.v+adjPrev.t,gc=adjCurr.v+adjCurr.t;
+  var gpEl=document.getElementById('adj-gp');if(gpEl)gpEl.textContent=gp?fmt(gp):'—';
+  var gcEl=document.getElementById('adj-gc');if(gcEl)gcEl.textContent=gc?fmt(gc):'—';
+  var iv=lastVatBalV+adjPrev.v+adjCurr.v;
+  var it=lastVatBalT+adjPrev.t+adjCurr.t;
+  var ig=iv+it;
+  function setH(id,html){var el=document.getElementById(id);if(el)el.innerHTML=html;}
+  function fmtR(v){return v>0?'<span style="font-weight:700;color:#dc2626">'+fmt(v)+'</span>':'<span style="color:#d1d5db">—</span>';}
+  function fmtG(v){return v<0?'<span style="font-weight:700;color:#16a34a">'+fmt(Math.abs(v))+'</span>':'<span style="color:#d1d5db">—</span>';}
+  setH('itog-v',fmt(iv));setH('itog-t',fmt(it));setH('itog-g',fmt(ig));
+  setH('itog-pay-v',fmtR(iv));setH('itog-pay-t',fmtR(it));setH('itog-pay-g',fmtR(ig));
+  setH('itog-ref-v',fmtG(iv));setH('itog-ref-t',fmtG(it));setH('itog-ref-g',fmtG(ig));
+}
+function attachAdj(){
+  ['adj-vp','adj-tp','adj-vc','adj-tc'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el)el.addEventListener('input',updateAdj);
+  });
+  updateAdj();
+}
 
 function load(reset){
   var el=document.getElementById("root"),rng=getRange();
@@ -545,6 +631,7 @@ function load(reset){
       var r=calc(txM,txAll,cats,pls,rng);
       el.innerHTML=render(r,true);
       renderPoDet(r.poDet);
+      attachAdj();
     }else{
       el.innerHTML="<div style='padding:12px;font-size:11px;color:#666'>Нет данных за "+rng.label+" ("+rng.s0+" — "+rng.s1+")</div>";
     }
