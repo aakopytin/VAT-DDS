@@ -659,7 +659,8 @@ function render(r,live){
   lastVatBalV=vatBalV; lastVatBalT=vatBalT;
   var vst=[];
   vst.push(VSPH());
-  vst.push(VSPR("НДС поступления",r.vVatTotalIn,r.tVatTotalIn,false,""));
+  vst.push(VSPR("НДС проекты",(r.vVatIncPjIn||0),(r.tVatIncPjIn||0),false,""));
+  vst.push(VSPR("НДС прочие поступления",(r.vVatIncPr||0)+(r.vVatIncRef||0)+(r.vVatIncPoIn||0),(r.tVatIncPr||0)+(r.tVatIncRef||0)+(r.tVatIncPoIn||0),false,""));
   vst.push(VSPR("К уплате",r.vVatTotalIn,r.tVatTotalIn,true,"r"));
   vst.push(VSPB());
   vst.push(VSPR("НДС проекты",r.vVatTotalOut-r.vVatOffV,r.tVatTotalOut-r.tVatOffV,false,""));
