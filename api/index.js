@@ -745,10 +745,30 @@ function load(reset){
   Promise.all([
     loadAll("transaction"),
     loadAll("categories"),
-    loadAll("transaction_pls",{"filter[category_id]":"3144,3147"}).catch(function(){return[];})
+    loadAll("transaction_pls",{"filter[category_id]":"3144,3147"}).catch(function(){return[];}),
+    loadAll("transaction",{"filter[org_account_id]":"149,150","filter[category_id]":"3144,3147"}).catch(function(){return[];})
   ]).then(function(res){
-    var txAll=res[0],cats=res[1],pls=res[2];
+    var txAll=res[0],cats=res[1],pls=res[2],corrTx=res[3];
     var rng=getRange();
+    // Previous quarter date range
+    var currY=parseInt(rng.s0.slice(0,4),10),currQ=Math.ceil(parseInt(rng.s0.slice(5,7),10)/3);
+    var prevQ=currQ-1,prevY=currY;
+    if(prevQ===0){prevQ=4;prevY=currY-1;}
+    var pqS0=[prevY+"-01-01",prevY+"-04-01",prevY+"-07-01",prevY+"-10-01"][prevQ-1];
+    var pqS1=[prevY+"-03-31",prevY+"-06-30",prevY+"-09-30",prevY+"-12-31"][prevQ-1];
+    function sumCorr(list,accId,s0,s1){
+      var sum=0;
+      (list||[]).forEach(function(tx){
+        if(+tx.org_account_id!==accId)return;
+        if(!tx.date||tx.date<s0||tx.date>s1)return;
+        sum+=(_ddsNum(tx.income)||0)-(_ddsNum(tx.outcome)||0);
+      });
+      return sum;
+    }
+    adjPrev.v=sumCorr(corrTx,149,pqS0,pqS1)*(-1);
+    adjPrev.t=sumCorr(corrTx,150,pqS0,pqS1)*(-1);
+    adjCurr.v=sumCorr(corrTx,149,rng.s0,rng.s1);
+    adjCurr.t=sumCorr(corrTx,150,rng.s0,rng.s1);
     var txM=txAll.filter(function(tx){return tx.date&&tx.date>=rng.s0&&tx.date<=rng.s1;});
     if(txM.length){
       var r=calc(txM,txAll,cats,pls,rng);
