@@ -566,7 +566,7 @@ function render(r,live){
     +'<button id="rst" style="background:none;border:1px solid #d1d5db;color:#9ca3af;font-size:11px;padding:1px 5px;border-radius:3px;cursor:pointer">⟳₀</button>'
     +'</div></div>'
     +'<div style="display:flex;gap:8px;align-items:flex-start">'
-    +'<div style="flex:1;min-width:0;overflow:hidden"><table style="table-layout:fixed;width:100%">'+rows.join('')+'</table></div>'
+    +'<div style="flex:1;min-width:0;overflow:hidden"><table style="table-layout:fixed;width:70%">'+rows.join('')+'</table></div>'
     +'<div style="flex-shrink:0">'
     +'<div style="font-size:13px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;padding:1px 2px 2px">Свод НДС</div>'
     +'<table style="border-collapse:collapse;table-layout:fixed">'+vst.join('')+'</table>'
