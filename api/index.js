@@ -340,6 +340,22 @@ function calc(txMonth,txAll,cats,plsData,rng){
     }
   });
 
+  // Привязка НДС поступлений к статьям ДДС через reference_id (для Расчета эффективной ставки)
+  // Офисные расходы уже привязаны через refCat_v; здесь делаем то же для поступлений
+  var vVatIncPjIn=0,tVatIncPjIn=0,vVatIncPr=0,tVatIncPr=0,vVatIncRef=0,tVatIncRef=0,vVatIncPoIn=0,tVatIncPoIn=0;
+  (plsData||[]).forEach(function(p2){
+    if(!p2.date||p2.date<rng.s0||p2.date>rng.s1)return;
+    if(p2.category_id!==3147)return;
+    var inc2=_ddsNum(p2.income)||0;if(!inc2)return;
+    if(p2.org_id===1){
+      var ic=refCat_v[p2.reference_id]||"";
+      if(ic==="pjIn")vVatIncPjIn+=inc2;else if(ic==="pr")vVatIncPr+=inc2;else if(ic==="refund")vVatIncRef+=inc2;else vVatIncPoIn+=inc2;
+    }else if(p2.org_id===2){
+      var ic2=refCat_t[p2.reference_id]||"";
+      if(ic2==="pjIn")tVatIncPjIn+=inc2;else if(ic2==="pr")tVatIncPr+=inc2;else if(ic2==="refund")tVatIncRef+=inc2;else tVatIncPoIn+=inc2;
+    }
+  });
+
   // Зеркалирование НДС трансферов: Аспро пишет только одну сторону ВСИП↔ТТ
   var tVatTrInD=tVatTrIn||vVatTrOut, tVatTrOutD=tVatTrOut||vVatTrIn;
   var vVatTrInD=vVatTrIn||tVatTrOut, vVatTrOutD=vVatTrOut||tVatTrIn;
@@ -382,6 +398,7 @@ function calc(txMonth,txAll,cats,plsData,rng){
     vVatTotalIn:vVatTotalIn,tVatTotalIn:tVatTotalIn,vVatTotalOut:vVatTotalOut,tVatTotalOut:tVatTotalOut,
     vPjBg:vPjBg,tPjBg:tPjBg,vPjDesign:vPjDesign,tPjDesign:tPjDesign,vPjMat:vPjMat,tPjMat:tPjMat,vPjSmr:vPjSmr,tPjSmr:tPjSmr,
     vVatPjBg:vVatPjBg,tVatPjBg:tVatPjBg,vVatPjDesign:vVatPjDesign,tVatPjDesign:tVatPjDesign,vVatPjMat:vVatPjMat,tVatPjMat:tVatPjMat,vVatPjSmr:vVatPjSmr,tVatPjSmr:tVatPjSmr,
+    vVatIncPjIn:vVatIncPjIn,tVatIncPjIn:tVatIncPjIn,vVatIncPr:vVatIncPr,tVatIncPr:tVatIncPr,vVatIncRef:vVatIncRef,tVatIncRef:tVatIncRef,vVatIncPoIn:vVatIncPoIn,tVatIncPoIn:tVatIncPoIn,
     ctrl:ctrl,vCtrl:vCtrl,tCtrl:tCtrl,cOk:cOk,poDet:poDet,cnt:txMonth.length,d0:rng.d0,d1:rng.d1,label:rng.label,ymd:rng.ymd};
 }
 
@@ -504,8 +521,11 @@ function buildDataTable(r){
   function SECR(lbl){
     return'<tr><td colspan="4" style="padding:5px 5px 2px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:#6b7280;border-top:1px solid #e5e7eb">'+lbl+'</td></tr>';
   }
-  var pjInVat=(r.vVatTotalIn+r.tVatTotalIn)-(r.vVatRefV+r.tVatRefV);
-  var refVat=r.vVatRefV+r.tVatRefV;
+  // НДС поступлений — из PLS через reference_id → AC-категория (аналогично офисным расходам)
+  var pjInVat=(r.vVatIncPjIn||0)+(r.tVatIncPjIn||0);
+  var prVat=(r.vVatIncPr||0)+(r.tVatIncPr||0);
+  var refVat=(r.vVatIncRef||0)+(r.tVatIncRef||0);
+  var poInVat=(r.vVatIncPoIn||0)+(r.tVatIncPoIn||0);
   var projVat=(r.vVatTotalOut-r.vVatOffV)+(r.tVatTotalOut-r.tVatOffV);
   var offSum=r.zp+r.km+r.bk+(r.ins||0)+r.lz+r.ar+r.buh+r.ntax+r.pct+(r.bg||0)+r.po+(r.pjOutOff||0);
   var offVat=r.vVatOffV+r.tVatOffV;
@@ -523,8 +543,8 @@ function buildDataTable(r){
   rows.push('<tr><td style="'+htl+'"></td><td style="'+hth+'">Сумма</td><td style="'+hth+'">НДС</td><td style="'+hth+'">Ставка</td></tr>');
   rows.push(SECR('Поступления'));
   if(r.pjIn)rows.push(ROW('Поступления по проектам',r.pjIn,pjInVat,true));
-  if(r.poIn)rows.push(ROW('Прочие проекты',r.poIn,0,true));
-  if(r.pr)rows.push(ROW('Процентные доходы',r.pr,0,true));
+  if(r.poIn)rows.push(ROW('Прочие проекты',r.poIn,poInVat,true));
+  if(r.pr)rows.push(ROW('Процентные доходы',r.pr,prVat,true));
   if(r.refund)rows.push(ROW('Возвраты',r.refund,refVat,true));
   rows.push(SEP('Итого поступлений',r.tot,r.vVatTotalIn+r.tVatTotalIn));
   rows.push(SECR('Расходы по проектам'));
