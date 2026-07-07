@@ -466,9 +466,9 @@ function VSPKREF(l,v,t){
 function VSPCORR(l,idv,idt,adjV,adjT){
   var idg=idv.replace('-v','-g');
   var adjG=(adjV||0)+(adjT||0);
-  var sl="padding:1px 2px;font-size:12px;color:#374151";
-  var sr="padding:1px 2px;text-align:right;font-size:11px";
-  var inp="width:66px;font-size:11px;text-align:right;border:1px solid #d1d5db;border-radius:2px;padding:1px 3px;background:#fffef0";
+  var sl="padding:1px 2px;font-size:13px;color:#1f2937";
+  var sr="padding:1px 2px;text-align:right;font-size:13px;white-space:nowrap";
+  var inp="width:80px;font-size:13px;text-align:right;border:1px solid #d1d5db;border-radius:2px;padding:1px 3px;background:#fffef0;color:#1f2937";
   return'<tr><td style="'+sl+'">'+l+'</td>'
     +'<td style="'+sr+'"><input id="'+idv+'" type="number" step="1" value="'+( adjV||0)+'" style="'+inp+'"></td>'
     +'<td style="'+sr+'"><input id="'+idt+'" type="number" step="1" value="'+( adjT||0)+'" style="'+inp+'"></td>'
@@ -660,7 +660,7 @@ function render(r,live){
   var vst=[];
   vst.push(VSPH());
   vst.push(VSPR("НДС проекты",(r.vVatIncPjIn||0),(r.tVatIncPjIn||0),false,""));
-  vst.push(VSPR("НДС прочие поступления",(r.vVatIncPr||0)+(r.vVatIncRef||0)+(r.vVatIncPoIn||0),(r.tVatIncPr||0)+(r.tVatIncRef||0)+(r.tVatIncPoIn||0),false,""));
+  vst.push(VSPR("НДС прочие поступления",r.vVatTotalIn-(r.vVatIncPjIn||0),r.tVatTotalIn-(r.tVatIncPjIn||0),false,""));
   vst.push(VSPR("К уплате",r.vVatTotalIn,r.tVatTotalIn,true,"r"));
   vst.push(VSPB());
   vst.push(VSPR("НДС проекты",r.vVatTotalOut-r.vVatOffV,r.tVatTotalOut-r.tVatOffV,false,""));
