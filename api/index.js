@@ -55,7 +55,7 @@ return `<!DOCTYPE html>
 <title>ДДС</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;background:#f8f9fd;color:#111827;padding:4px 6px;overflow-x:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;background:#f8f9fd;color:#111827;padding:0;overflow-x:hidden}
 table{border-collapse:collapse}
 td{padding:1px 2px}
 details summary{font-size:11px;color:#9ca3af;cursor:pointer;padding:4px 0}
@@ -426,7 +426,7 @@ function SEC(l){return"<tr><td colspan='6' style='padding:5px 4px 1px;font-size:
 
 // ─── Свод НДС — вспомогательные функции ──────────────────────────────────
 function VSPH(){
-  var s="width:103px;padding:1px 2px;font-size:13px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap";
+  var s="width:124px;padding:1px 2px;font-size:13px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;text-align:right;white-space:nowrap";
   var sl="padding:1px 2px;font-size:13px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af";
   return"<tr><td style='"+sl+"'></td><td style='"+s+"'>ВСИП</td><td style='"+s+"'>ТТ</td><td style='"+s+"'>Итого</td></tr>";
 }
@@ -659,7 +659,6 @@ function render(r,live){
   lastVatBalV=vatBalV; lastVatBalT=vatBalT;
   var vst=[];
   vst.push(VSPH());
-  vst.push(VSPR("НДС Расчетный",vatBalV,vatBalT,false,""));
   vst.push(VSPR("НДС поступления",r.vVatTotalIn,r.tVatTotalIn,false,""));
   vst.push(VSPR("К уплате",r.vVatTotalIn,r.tVatTotalIn,true,"r"));
   vst.push(VSPB());
@@ -690,7 +689,7 @@ function render(r,live){
     +'<div style="display:flex;gap:1cm;align-items:flex-start">'
     +'<div style="flex:1;min-width:0;overflow:hidden;display:flex;justify-content:flex-end;align-items:flex-start"><table style="table-layout:fixed;width:70%">'+rows.join('')+'</table></div>'
     +'<div style="flex-shrink:0">'
-    +'<div style="font-size:13px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;padding:1px 2px 2px">Свод НДС</div>'
+    +'<div style="font-size:13px;font-weight:700;color:#374151;border-bottom:2px solid #9ca3af;padding:1px 2px 2px">Свод НДС<span style="font-weight:400;color:#6b7280;margin-left:8px;font-size:11px">НДС расчетный</span></div>'
     +'<table style="border-collapse:collapse;table-layout:fixed">'+vst.join('')+'</table>'
     +buildDataTable(r)
     +'</div></div>'
