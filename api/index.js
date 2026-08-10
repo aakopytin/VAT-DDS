@@ -276,12 +276,16 @@ function calc(txMonth,txAll,cats,plsData,rng){
       }
       if(!pOk){if(p.org_id===1){if(refPG_v[gp]){vVatRefV+=inc47;vVatTotalIn+=inc47;}else{vVatTr+=inc47;}}else if(p.org_id===2){if(refPG_t[gp]){tVatRefV+=inc47;tVatTotalIn+=inc47;}else{tVatTr+=inc47;}}return;}
       if(p.org_id===1){
-        if((piP_v[gp]||0)>0){vVatPiP[gp]=(vVatPiP[gp]||0)+inc47;}
+        var rc1=refCat_v[p.reference_id]||"";
+        if(rc1==="refund"){vVatRefV+=inc47;}
+        else if((piP_v[gp]||0)>0){vVatPiP[gp]=(vVatPiP[gp]||0)+inc47;}
         else if(refPG_v[gp]){vVatRefV+=inc47;}
         else{vVatTr+=inc47;}
         vVatTotalIn+=inc47;
       }else if(p.org_id===2){
-        if((piP_t[gp]||0)>0){tVatPiP[gp]=(tVatPiP[gp]||0)+inc47;}
+        var rc2=refCat_t[p.reference_id]||"";
+        if(rc2==="refund"){tVatRefV+=inc47;}
+        else if((piP_t[gp]||0)>0){tVatPiP[gp]=(tVatPiP[gp]||0)+inc47;}
         else if(refPG_t[gp]){tVatRefV+=inc47;}
         else{tVatTr+=inc47;}
         tVatTotalIn+=inc47;
