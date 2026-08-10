@@ -199,7 +199,7 @@ function calc(txMonth,txAll,cats,plsData,rng){
       else if(cat==="skIn"){if(isV)vSkIn+=inc;if(isT)tSkIn+=inc;}
       else{if(isV)vPoIn+=inc;if(isT)tPoIn+=inc;}
     }
-    if(out>0){
+    if(out){
       if(cat==="zp"){if(isV)vZp+=out;if(isT)tZp+=out;}
       else if(cat==="km"){if(isV)vKm+=out;if(isT)tKm+=out;}
       else if(cat==="ins"){if(isV)vIns+=out;if(isT)tIns+=out;}
