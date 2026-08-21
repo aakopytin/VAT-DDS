@@ -648,8 +648,7 @@ function render(r,live){
   vst.push(VSPKUP("  К уплате",vatBalV,vatBalT));
   vst.push(VSPKREF("  К возмещению",vatBalV,vatBalT));
   vst.push(VSPB());
-  vst.push(VSPCORR("Корр. прош. кв.",adjPrev.v,adjPrev.t));
-  vst.push(VSPCORR("Корр. тек. кв.",adjCurr.v,adjCurr.t));
+  vst.push(VSPCORR("Корректировки НДС",adjCurr.v,adjCurr.t));
   vst.push(VSPITOG("Итоговый Баланс","itog-v","itog-t","itog-g"));
   vst.push(VSPROWID("  К уплате","itog-pay-v","itog-pay-t","itog-pay-g"));
   vst.push(VSPROWID("  К возмещению","itog-ref-v","itog-ref-t","itog-ref-g"));
@@ -687,8 +686,8 @@ function renderPoDet(poDet){
   d.appendChild(t);document.getElementById("root").appendChild(d);
 }
 function updateAdj(){
-  var iv=lastVatBalV+adjPrev.v+adjCurr.v;
-  var it=lastVatBalT+adjPrev.t+adjCurr.t;
+  var iv=lastVatBalV+adjCurr.v;
+  var it=lastVatBalT+adjCurr.t;
   var ig=iv+it;
   function setH(id,html){var el=document.getElementById(id);if(el)el.innerHTML=html;}
   function fmtR(v){return v>0?'<span style="font-weight:700;color:#dc2626">'+fmt(v)+'</span>':'<span style="color:#d1d5db">—</span>';}
@@ -707,28 +706,21 @@ function load(reset){
     loadAll("transaction"),
     loadAll("categories"),
     loadAll("transaction_pls",{"filter[category_id]":"3144,3147"}).catch(function(){return[];}),
-    loadAll("transaction",{"filter[org_account_id]":"149,150","filter[category_id]":"3144,3147"}).catch(function(){return[];})
+    loadAll("plan_money",{"filter[org_account_id]":"149"}).catch(function(){return[];})
   ]).then(function(res){
     var txAll=res[0],cats=res[1],pls=res[2],corrTx=res[3];
     var rng=getRange();
-    var currY=parseInt(rng.s0.slice(0,4),10),currQ=Math.ceil(parseInt(rng.s0.slice(5,7),10)/3);
-    var prevQ=currQ-1,prevY=currY;
-    if(prevQ===0){prevQ=4;prevY=currY-1;}
-    var pqS0=[prevY+"-01-01",prevY+"-04-01",prevY+"-07-01",prevY+"-10-01"][prevQ-1];
-    var pqS1=[prevY+"-03-31",prevY+"-06-30",prevY+"-09-30",prevY+"-12-31"][prevQ-1];
-    function sumCorr(list,accId,s0,s1){
-      var sum=0;
-      (list||[]).forEach(function(tx){
-        if(+tx.org_account_id!==accId)return;
-        if(!tx.date||tx.date<s0||tx.date>s1)return;
-        sum+=(_ddsNum(tx.income)||0)-(_ddsNum(tx.outcome)||0);
-      });
-      return sum;
-    }
-    adjPrev.v=sumCorr(corrTx,149,pqS0,pqS1)*(-1);
-    adjPrev.t=sumCorr(corrTx,150,pqS0,pqS1)*(-1);
-    adjCurr.v=sumCorr(corrTx,149,rng.s0,rng.s1);
-    adjCurr.t=sumCorr(corrTx,150,rng.s0,rng.s1);
+    // Корректировки НДС из плановых позиций счёта 149 (org_account_id=149)
+    // Фильтр: plan_paid_date в выбранном квартале; ВСИП/ТТ — из name; знак: расход(40)=+, доход(30)=-
+    adjPrev.v=0; adjPrev.t=0; adjCurr.v=0; adjCurr.t=0;
+    (corrTx||[]).forEach(function(pm){
+      if(!pm.plan_paid_date||pm.plan_paid_date<rng.s0||pm.plan_paid_date>rng.s1)return;
+      var sign=pm.type===40?1:-1;
+      var val=(pm.total||0)*sign;
+      var n=(pm.name||'').toUpperCase();
+      if(n.indexOf('ВСИП')>=0){adjCurr.v+=val;}
+      else if(n.indexOf('ТТ')>=0){adjCurr.t+=val;}
+    });
     var txM=txAll.filter(function(tx){return tx.date&&tx.date>=rng.s0&&tx.date<=rng.s1;});
     if(txM.length){
       var r=calc(txM,txAll,cats,pls,rng);
