@@ -95,7 +95,7 @@ var AC={
 "Бухгалтерия":"buh",
 "Налоги и взносы":"ntax","Налоги - НДС":"ntax",
 "Прочее":"po","Интернет и связь":"po","Проценты к уплате":"pct",
-"Оборудование":"po","Возвраты клиентам":"ret","Нераспределенные":"po",
+"Оборудование":"po","Возвраты клиентам":"pjOut","Нераспределенные":"po",
 "Нераспределенные (списание)":"po","Офис":"po",
 "СМР (Без детализации)":"pjOut","СМР Вент+кондиц":"pjOut",
 "Материалы (Вентиляция)":"pjOut","Материалы (Отопление)":"pjOut",
@@ -159,7 +159,7 @@ if(VSIP[aid]){vEnd+=inc-out;}
 if(TT[aid])  {tEnd+=inc-out;}
 });
  
-var pr=0,zp=0,km=0,bk=0,ins=0,lz=0,ar=0,buh=0,ntax=0,po=0,pct=0,bg=0,ret=0,poIn=0,pjIn=0,pjOut=0,refund=0,trIn=0,trOut=0,skIn=0,skOut=0;
+var pr=0,zp=0,km=0,bk=0,ins=0,lz=0,ar=0,buh=0,ntax=0,po=0,pct=0,bg=0,poIn=0,pjIn=0,pjOut=0,pjOutOff=0,refund=0,trIn=0,trOut=0,skIn=0,skOut=0;
 var piP={},poP={},poDet=[],vNet=0,tNet=0;
  
 txMonth.forEach(function(tx){
@@ -183,7 +183,7 @@ else if(cat==="refund"&&pOk)refund+=inc;
 else if(cat==="skIn")skIn+=inc;
 else{poIn+=inc;}
 }
-if(out){
+if(out>0){
 if(cat==="zp")zp+=out;else if(cat==="km")km+=out;
 else if(cat==="ins")ins+=out;else if(cat==="bk")bk+=out;
 else if(cat==="lz")lz+=out;else if(cat==="ar")ar+=out;
@@ -194,11 +194,13 @@ if(pOk){pjOut+=out;if(gp)poP[gp]=(poP[gp]||0)+out;}
 else{po+=out;poDet.push({date:tx.date,cat:cn,out:out});}
 }
 else if(cat==="pct")pct+=out;
-else if(cat==="ret")ret+=out;
 else if(cat==="bg"){if(pOff)bg+=out;else{pjOut+=out;if(gp&&pOk)poP[gp]=(poP[gp]||0)+out;}}
 else if(cat==="skOut")skOut+=out;
+else if(cat==="pjOut"){
+if(pOk&&!pOff){pjOut+=out;if(gp)poP[gp]=(poP[gp]||0)+out;}
+else pjOutOff+=out;
+}
 else if(!pOff){pjOut+=out;if(gp&&pOk)poP[gp]=(poP[gp]||0)+out;}
-else{po+=out;poDet.push({date:tx.date,cat:cn,out:out});}
 }
 });
  
@@ -211,9 +213,9 @@ if(VSIP[aid]){vSt+=inc-out;}
 if(TT[aid])  {tSt+=inc-out;}
 });
  
-var te=pjOut+zp+km+bk+ins+lz+ar+buh+ntax+po+pct+bg+ret;
+var te=pjOut+pjOutOff+zp+km+bk+ins+lz+ar+buh+ntax+po+pct+bg;
 return{vSt:vSt,tSt:tSt,vEnd:vEnd,tEnd:tEnd,tS:vSt+tSt,tE:(vEnd||0)+(tEnd||0),
-pr:pr,pjIn:pjIn,refund:refund,poIn:poIn,pjOut:pjOut,zp:zp,km:km,bk:bk,ins:ins,lz:lz,ar:ar,buh:buh,ntax:ntax,po:po,pct:pct,bg:bg,ret:ret,te:te,trIn:trIn,trOut:trOut,skIn:skIn,skOut:skOut,
+pr:pr,pjIn:pjIn,refund:refund,poIn:poIn,pjOut:pjOut,pjOutOff:pjOutOff,zp:zp,km:km,bk:bk,ins:ins,lz:lz,ar:ar,buh:buh,ntax:ntax,po:po,pct:pct,bg:bg,te:te,trIn:trIn,trOut:trOut,skIn:skIn,skOut:skOut,
 piP:piP,poP:poP,poDet:poDet,cnt:txMonth.length,d0:rng.d0,d1:rng.d1,label:rng.label,ymd:rng.ymd};
 }
  
@@ -252,9 +254,9 @@ if(r.buh)rows.push(TR("Бухгалтерия",r.buh,"",1));
 if(r.ntax)rows.push(TR("Налоги и взносы",r.ntax,"",1));
 if(r.pct)rows.push(TR("Проценты к уплате",r.pct,"",1));
 if(r.bg)rows.push(TR("Банковские гарантии",r.bg,"",1));
-if(r.ret)rows.push(TR("Возвраты клиентам",r.ret,"",1));
+if(r.pjOutOff)rows.push(TR("Возвраты клиентам",r.pjOutOff,"",1));
 if(r.po)rows.push(TR("Прочие офисные",r.po,"",1));
-var offTotal=r.zp+r.km+r.bk+r.ins+r.lz+r.ar+r.buh+r.ntax+r.po+r.pct+r.bg+r.ret;
+var offTotal=r.zp+r.km+r.bk+r.ins+r.lz+r.ar+r.buh+r.ntax+r.po+r.pct+r.bg+(r.pjOutOff||0);
 rows.push(SEP("Итого офисные",offTotal,""));
 var trNetto=r.trIn-r.trOut;
 var ctrl=r.tS+tot+r.skIn-(r.te+r.skOut-trNetto)-r.tE,cOk=Math.abs(ctrl)<1;
