@@ -1,8 +1,20 @@
 {
   "routes": [
-    { "src": "/api/data",  "dest": "/api/data.js"  },
-    { "src": "/api/dds",   "dest": "/api/index.js" },
-    { "src": "/api/index", "dest": "/api/index.js" },
-    { "src": "/(.*)",      "dest": "/api/index.js" }
+    {
+      "src": "/api/data",
+      "dest": "/api/data.js"
+    },
+    {
+      "src": "/api/dds",
+      "dest": "/api/vat-dds.js"
+    },
+    {
+      "src": "/api/index",
+      "dest": "/api/vat-dds.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/vat-dds.js"
+    }
   ]
 }
