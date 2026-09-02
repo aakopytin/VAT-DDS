@@ -383,8 +383,7 @@ function render(r,live){
   if(r.pr)rows.push(TR6("Процентные доходы",r.pr,r.vPr,null,r.tPr,null,"g",1));
   if(r.refund)rows.push(TR6("Возвраты",r.refund,r.vRefund,null,r.tRefund,null,"g",1));
   if(r.poIn)rows.push(TR6("Прочие поступления",r.poIn,r.vPoIn,null,r.tPoIn,null,"g",1));
-  if(r.vVatNonProjIn||r.tVatNonProjIn)rows.push(TR6("НДС прочие поступления",r.vVatNonProjIn+r.tVatNonProjIn,r.vVatNonProjIn,null,r.tVatNonProjIn,null,"g",1));
-  rows.push(SEP6("Итого поступлений",r.tot,r.vPjIn+r.vPr+r.vRefund+r.vPoIn,r.vVatTotalIn+r.vVatNonProjIn,r.tPjIn+r.tPr+r.tRefund+r.tPoIn,r.tVatTotalIn+r.tVatNonProjIn,"g"));
+  rows.push(SEP6("Итого поступлений",r.tot,r.vPjIn+r.vPr+r.vRefund+r.vPoIn,r.vVatTotalIn,r.tPjIn+r.tPr+r.tRefund+r.tPoIn,r.tVatTotalIn,"g"));
 
   rows.push(SEC("Расходы по проектам"));
   var hasPo=Object.keys(r.poP_v).length>0||Object.keys(r.poP_t).length>0
@@ -415,14 +414,13 @@ function render(r,live){
   rows.push(SEP6("Итого офисные",r.zp+r.km+r.bk+r.ins+r.lz+r.ar+r.buh+r.ntax+r.po+r.pct+r.bg,offV,null,offT,null,""));
 
   rows.push(SEC("Переводы между счетами"));
-  if(r.trIn_v||r.trIn_t){
-    rows.push(TR6("Нетто переводы полученные",r.trIn_v+r.trIn_t,r.trIn_v,null,r.trIn_t,null,"g",""));
+  if(r.trIn_v||r.trIn_t||r.vVatNonProjIn||r.tVatNonProjIn){
+    rows.push(TR6("Нетто переводы полученные",r.trIn_v+r.trIn_t,r.trIn_v,r.vVatNonProjIn||null,r.trIn_t,r.tVatNonProjIn||null,"g",""));
   }
-  if(r.trOut_v||r.trOut_t){
-    rows.push(TR6("Нетто переводы списание",r.trOut_v+r.trOut_t,r.trOut_v,null,r.trOut_t,null,"",""));
+  if(r.trOut_v||r.trOut_t||r.vVatTransfer||r.tVatTransfer){
+    rows.push(TR6("Нетто переводы списание",r.trOut_v+r.trOut_t,r.trOut_v,r.vVatTransfer||null,r.trOut_t,r.tVatTransfer||null,"",""));
   }
   rows.push(SEP6("Нетто переводы",r.trNetto,(r.trIn_v-r.trOut_v),null,(r.trIn_t-r.trOut_t),null,r.trNetto>0?"g":r.trNetto<0?"r":""));
-  if(r.vVatTransfer||r.tVatTransfer)rows.push(TR6("НДС трансф.",r.vVatTransfer+r.tVatTransfer,r.vVatTransfer,null,r.tVatTransfer,null,"m",1));
 
   if(r.skIn||r.skOut){
     rows.push(SEC("Финансирование (займы)"));
