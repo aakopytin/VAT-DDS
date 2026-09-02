@@ -79,7 +79,7 @@ var TT={18:1,26:1};
 var OFF={24:1};
 var PN={1:"Кемерово",3:"Южно-Сахалинск",10:"Большое Болдино",25:"Южно-Сахалинск",13:"Барнаул",12:"Киров",23:"Сыктывкар",9:"Рузаевка",7:"Иволгинск",6:"Десногорск",102:"Голутвинский",100:"Центральный договор",101:"Прочие проекты"};
 var PO=[1,3,10,13,12,23,9,7,6,102,100,101];
-var PG={2:101,4:101,18:100,19:100,21:101,29:100,30:100,31:100,32:100,33:102,17:101,20:101,22:101,28:101,24:101,26:101};
+var PG={2:101,4:101,18:100,19:100,21:101,29:100,30:100,31:100,32:100,33:102,17:101,20:101,22:101,28:101,24:103,26:103};
 var AC={
 "Перевод между счетами (поступление)":"tr","Перевод между счетами (списание)":"tr",
 "Получение кредита":"skIn","Выплата кредита":"skOut",
@@ -239,11 +239,11 @@ function calc(txMonth,txAll,cats,plsData,corrData,rng){
       }
       if(p.org_id===1){
         vVatPoP[gp]=(vVatPoP[gp]||0)+out44;vVatTotalOut+=out44;
-        if(gp===100||gp===101)vVatOffice+=out44; // офисные проекты — подмножество vVatTotalOut
+        if(gp===103)vVatOffice+=out44; // офисные проекты (24,26) — подмножество vVatTotalOut
       }
       else if(p.org_id===2){
         tVatPoP[gp]=(tVatPoP[gp]||0)+out44;tVatTotalOut+=out44;
-        if(gp===100||gp===101)tVatOffice+=out44;
+        if(gp===103)tVatOffice+=out44;
       }
     }
   });
@@ -395,7 +395,7 @@ function render(r,live){
       if(pv||pt||vpv||vpt)rows.push(TR6(PN[p],pv+pt,pv,vpv||null,pt,vpt||null,"",1));
     });
   }
-  rows.push(SEP6("Итого проекты",r.pjOut,r.vPjOut,r.vVatTotalOut,r.tPjOut,r.tVatTotalOut,""));
+  rows.push(SEP6("Итого проекты",r.pjOut,r.vPjOut,r.vVatTotalOut-r.vVatOffice,r.tPjOut,r.tVatTotalOut-r.tVatOffice,""));
 
   rows.push(SEC("Офисные расходы"));
   if(r.zp)rows.push(TR6("Зарплата",r.zp,r.vZp,null,r.tZp,null,"",1));
@@ -411,7 +411,7 @@ function render(r,live){
   if(r.po)rows.push(TR6("Прочие офисные",r.po,r.vPo,null,r.tPo,null,"",1));
   var offV=r.vZp+r.vKm+r.vBk+r.vIns+r.vLz+r.vAr+r.vBuh+r.vNtax+r.vPo+r.vPct+r.vBg;
   var offT=r.tZp+r.tKm+r.tBk+r.tIns+r.tLz+r.tAr+r.tBuh+r.tNtax+r.tPo+r.tPct+r.tBg;
-  rows.push(SEP6("Итого офисные",r.zp+r.km+r.bk+r.ins+r.lz+r.ar+r.buh+r.ntax+r.po+r.pct+r.bg,offV,null,offT,null,""));
+  rows.push(SEP6("Итого офисные",r.zp+r.km+r.bk+r.ins+r.lz+r.ar+r.buh+r.ntax+r.po+r.pct+r.bg,offV,r.vVatOffice||null,offT,r.tVatOffice||null,""));
 
   rows.push(SEC("Переводы между счетами"));
   if(r.trIn_v||r.trIn_t||r.vVatNonProjIn||r.tVatNonProjIn){
