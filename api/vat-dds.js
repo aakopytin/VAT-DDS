@@ -227,8 +227,8 @@ function calc(txMonth,txAll,cats,plsData,corrData,rng){
     var gp=(pid&&PG[pid])?PG[pid]:pid;
     var pOk=gp&&!!PN[gp];
     if(is3147){
-      // НДС внутри поступлений → доходные строки
-      var inc47=_ddsNum(p.income)||0;if(!inc47)return;
+      // НДС внутри поступлений → доходные строки (корректировка через outcome вычитается)
+      var inc47=(_ddsNum(p.income)||0)-(_ddsNum(p.outcome)||0);if(!inc47)return;
       if(!pOk){if(p.org_id===1)vVatNonProjIn+=inc47;else if(p.org_id===2)tVatNonProjIn+=inc47;return;}
       if(p.org_id===1){vVatPiP[gp]=(vVatPiP[gp]||0)+inc47;vVatTotalIn+=inc47;}
       else if(p.org_id===2){tVatPiP[gp]=(tVatPiP[gp]||0)+inc47;tVatTotalIn+=inc47;}
