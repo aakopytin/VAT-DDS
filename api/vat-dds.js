@@ -107,12 +107,13 @@ function getRange(){
   var now=new Date(),y=now.getFullYear(),q=Math.ceil((now.getMonth()+1)/3);
   if(val){var pts=val.split(":");y=parseInt(pts[0],10);q=parseInt(pts[1],10);}
   var s0=[y+"-01-01",y+"-04-01",y+"-07-01",y+"-10-01"][q-1];
-  var s1=[y+"-03-31",y+"-06-30",y+"-09-30",y+"-12-31"][q-1];
+  var s1End=[y+"-03-31",y+"-06-30",y+"-09-30",y+"-12-31"][q-1];
+  var s1=s1End;
   var todayStr=new Date().toISOString().slice(0,10);
   if(s1>todayStr)s1=todayStr;
   var d0=s0.slice(8)+"."+s0.slice(5,7)+"."+s0.slice(0,4);
   var d1=s1.slice(8)+"."+s1.slice(5,7)+"."+s1.slice(0,4);
-  return{s0:s0,s1:s1,d0:d0,d1:d1,label:"К"+q+" "+y,ymd:s0.slice(0,7)};
+  return{s0:s0,s1:s1,s1End:s1End,d0:d0,d1:d1,label:"К"+q+" "+y,ymd:s0.slice(0,7)};
 }
 
 var lk=function(ym){return"dds_"+ACCOUNT_ID+"_"+ym;};
@@ -253,7 +254,7 @@ function calc(txMonth,txAll,cats,plsData,corrData,rng){
   var _currQ=Math.ceil((new Date(rng.s0).getMonth()+1)/3);
   (corrData||[]).forEach(function(p){
     var ppd=p.plan_paid_date||"";
-    if(!ppd||ppd<rng.s0||ppd>rng.s1)return;
+    if(!ppd||ppd<rng.s0||ppd>rng.s1End)return;
     var nm=p.name||"";
     var isV=nm.indexOf("ВСИП")>=0,isT=nm.indexOf("ТТ")>=0||nm.indexOf("Тт")>=0;
     if(!isV&&!isT)return;
