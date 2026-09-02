@@ -74,7 +74,7 @@ var ACCOUNT_ID="${esc(a)}";
 var TOKEN="${esc(t)}";
 var API_BASE="${esc(h)}"?"https://${esc(h)}":(location.origin||"");
 
-var VSIP={2:1,4:1,5:1,6:1,7:1,8:1};
+var VSIP={1:1,2:1,3:1,4:1,5:1,6:1,7:1,8:1,161:1,166:1,175:1,176:1,177:1,178:1};
 var TT={18:1,26:1};
 var OFF={24:1};
 var PN={1:"Кемерово",3:"Южно-Сахалинск",10:"Большое Болдино",25:"Южно-Сахалинск",13:"Барнаул",12:"Киров",23:"Сыктывкар",9:"Рузаевка",7:"Иволгинск",6:"Десногорск",102:"Голутвинский",100:"Центральный договор",101:"Прочие проекты"};
@@ -178,14 +178,14 @@ function calc(txMonth,txAll,cats,plsData,corrData,rng){
       }
       return;
     }
-    if(inc>0){
+    if(inc){
       if(cat==="pr"){if(isV)vPr+=inc;if(isT)tPr+=inc;}
       else if(cat==="pjIn"&&pOk){if(isV){vPjIn+=inc;piP_v[gp]=(piP_v[gp]||0)+inc;}if(isT){tPjIn+=inc;piP_t[gp]=(piP_t[gp]||0)+inc;}}
       else if(cat==="refund"){if(isV)vRefund+=inc;if(isT)tRefund+=inc;}
       else if(cat==="skIn"){if(isV)vSkIn+=inc;if(isT)tSkIn+=inc;}
       else{if(isV)vPoIn+=inc;if(isT)tPoIn+=inc;}
     }
-    if(out>0){
+    if(out){
       if(cat==="zp"){if(isV)vZp+=out;if(isT)tZp+=out;}
       else if(cat==="km"){if(isV)vKm+=out;if(isT)tKm+=out;}
       else if(cat==="ins"){if(isV)vIns+=out;if(isT)tIns+=out;}
