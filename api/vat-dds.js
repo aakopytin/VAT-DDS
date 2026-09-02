@@ -369,11 +369,13 @@ function render(r,live){
   rows.push(SEP6("ИТОГО на "+r.d1,r.tE,r.vEnd,null,r.tEnd,null,r.tE>=0?"g":"r"));
 
   rows.push(SEC("Поступления"));
-  var hasPi=Object.keys(r.piP_v).length>0||Object.keys(r.piP_t).length>0;
+  var hasPi=Object.keys(r.piP_v).length>0||Object.keys(r.piP_t).length>0
+           ||Object.keys(r.vVatPiP).length>0||Object.keys(r.tVatPiP).length>0;
   if(hasPi){
     PO.forEach(function(p){
       var pv=r.piP_v[p]||0,pt=r.piP_t[p]||0;
-      if(pv||pt)rows.push(TR6(PN[p],pv+pt,pv,r.vVatPiP[p]||0,pt,r.tVatPiP[p]||0,"g",1));
+      var vpv=r.vVatPiP[p]||0,vpt=r.tVatPiP[p]||0;
+      if(pv||pt||vpv||vpt)rows.push(TR6(PN[p],pv+pt,pv,vpv,pt,vpt,"g",1));
     });
   }else if(r.pjIn){
     rows.push(TR6("Поступления по проектам",r.pjIn,r.vPjIn,null,r.tPjIn,null,"g",1));
@@ -381,14 +383,17 @@ function render(r,live){
   if(r.pr)rows.push(TR6("Процентные доходы",r.pr,r.vPr,null,r.tPr,null,"g",1));
   if(r.refund)rows.push(TR6("Возвраты",r.refund,r.vRefund,null,r.tRefund,null,"g",1));
   if(r.poIn)rows.push(TR6("Прочие поступления",r.poIn,r.vPoIn,null,r.tPoIn,null,"g",1));
+  if(r.vVatNonProjIn||r.tVatNonProjIn)rows.push(TR6("НДС прочие поступления",r.vVatNonProjIn+r.tVatNonProjIn,r.vVatNonProjIn,null,r.tVatNonProjIn,null,"g",1));
   rows.push(SEP6("Итого поступлений",r.tot,r.vPjIn+r.vPr+r.vRefund+r.vPoIn,r.vVatTotalIn+r.vVatNonProjIn,r.tPjIn+r.tPr+r.tRefund+r.tPoIn,r.tVatTotalIn+r.tVatNonProjIn,"g"));
 
   rows.push(SEC("Расходы по проектам"));
-  var hasPo=Object.keys(r.poP_v).length>0||Object.keys(r.poP_t).length>0;
+  var hasPo=Object.keys(r.poP_v).length>0||Object.keys(r.poP_t).length>0
+           ||Object.keys(r.vVatPoP).length>0||Object.keys(r.tVatPoP).length>0;
   if(hasPo){
     PO.forEach(function(p){
       var pv=r.poP_v[p]||0,pt=r.poP_t[p]||0;
-      if(pv||pt)rows.push(TR6(PN[p],pv+pt,pv,r.vVatPoP[p]||0,pt,r.tVatPoP[p]||0,"",1));
+      var vpv=r.vVatPoP[p]||0,vpt=r.tVatPoP[p]||0;
+      if(pv||pt||vpv||vpt)rows.push(TR6(PN[p],pv+pt,pv,vpv||null,pt,vpt||null,"",1));
     });
   }
   rows.push(SEP6("Итого проекты",r.pjOut,r.vPjOut,r.vVatTotalOut,r.tPjOut,r.tVatTotalOut,""));
@@ -407,7 +412,7 @@ function render(r,live){
   if(r.po)rows.push(TR6("Прочие офисные",r.po,r.vPo,null,r.tPo,null,"",1));
   var offV=r.vZp+r.vKm+r.vBk+r.vIns+r.vLz+r.vAr+r.vBuh+r.vNtax+r.vPo+r.vPct+r.vBg;
   var offT=r.tZp+r.tKm+r.tBk+r.tIns+r.tLz+r.tAr+r.tBuh+r.tNtax+r.tPo+r.tPct+r.tBg;
-  rows.push(SEP6("Итого офисные",r.zp+r.km+r.bk+r.ins+r.lz+r.ar+r.buh+r.ntax+r.po+r.pct+r.bg,offV,r.vVatOffice||null,offT,r.tVatOffice||null,""));
+  rows.push(SEP6("Итого офисные",r.zp+r.km+r.bk+r.ins+r.lz+r.ar+r.buh+r.ntax+r.po+r.pct+r.bg,offV,null,offT,null,""));
 
   rows.push(SEC("Переводы между счетами"));
   if(r.trIn_v||r.trIn_t){
@@ -417,8 +422,7 @@ function render(r,live){
     rows.push(TR6("Нетто переводы списание",r.trOut_v+r.trOut_t,r.trOut_v,null,r.trOut_t,null,"",""));
   }
   rows.push(SEP6("Нетто переводы",r.trNetto,(r.trIn_v-r.trOut_v),null,(r.trIn_t-r.trOut_t),null,r.trNetto>0?"g":r.trNetto<0?"r":""));
-  var vVatNP=r.vVatNonProjIn+r.vVatOffice+r.vVatTransfer,tVatNP=r.tVatNonProjIn+r.tVatOffice+r.tVatTransfer;
-  if(vVatNP||tVatNP)rows.push(TR6("НДС (трансферы/прочее)",vVatNP+tVatNP,vVatNP,null,tVatNP,null,"m",1));
+  if(r.vVatTransfer||r.tVatTransfer)rows.push(TR6("НДС трансф.",r.vVatTransfer+r.tVatTransfer,r.vVatTransfer,null,r.tVatTransfer,null,"m",1));
 
   if(r.skIn||r.skOut){
     rows.push(SEC("Финансирование (займы)"));
