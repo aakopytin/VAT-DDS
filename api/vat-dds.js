@@ -108,6 +108,8 @@ function getRange(){
   if(val){var pts=val.split(":");y=parseInt(pts[0],10);q=parseInt(pts[1],10);}
   var s0=[y+"-01-01",y+"-04-01",y+"-07-01",y+"-10-01"][q-1];
   var s1=[y+"-03-31",y+"-06-30",y+"-09-30",y+"-12-31"][q-1];
+  var todayStr=new Date().toISOString().slice(0,10);
+  if(s1>todayStr)s1=todayStr;
   var d0=s0.slice(8)+"."+s0.slice(5,7)+"."+s0.slice(0,4);
   var d1=s1.slice(8)+"."+s1.slice(5,7)+"."+s1.slice(0,4);
   return{s0:s0,s1:s1,d0:d0,d1:d1,label:"К"+q+" "+y,ymd:s0.slice(0,7)};
@@ -235,12 +237,18 @@ function calc(txMonth,txAll,cats,plsData,corrData,rng){
       // НДС внутри платежей → расходные строки
       var out44=(_ddsNum(p.outcome)||0)-(_ddsNum(p.income)||0);if(!out44)return;
       if(!pOk){
-        if(OFF[pid]){if(p.org_id===1)vVatTransfer+=out44;else if(p.org_id===2)tVatTransfer+=out44;}
-        else{if(p.org_id===1)vVatOffice+=out44;else if(p.org_id===2)tVatOffice+=out44;}
+        // Все неопознанные проекты → трансферы (межкорпоративные расчёты НДС)
+        if(p.org_id===1)vVatTransfer+=out44;else if(p.org_id===2)tVatTransfer+=out44;
         return;
       }
-      if(p.org_id===1){vVatPoP[gp]=(vVatPoP[gp]||0)+out44;vVatTotalOut+=out44;}
-      else if(p.org_id===2){tVatPoP[gp]=(tVatPoP[gp]||0)+out44;tVatTotalOut+=out44;}
+      if(p.org_id===1){
+        vVatPoP[gp]=(vVatPoP[gp]||0)+out44;vVatTotalOut+=out44;
+        if(gp===100||gp===101)vVatOffice+=out44; // офисные проекты — подмножество vVatTotalOut
+      }
+      else if(p.org_id===2){
+        tVatPoP[gp]=(tVatPoP[gp]||0)+out44;tVatTotalOut+=out44;
+        if(gp===100||gp===101)tVatOffice+=out44;
+      }
     }
   });
 
@@ -377,7 +385,7 @@ function render(r,live){
   if(r.pr)rows.push(TR6("Процентные доходы",r.pr,r.vPr,null,r.tPr,null,"g",1));
   if(r.refund)rows.push(TR6("Возвраты",r.refund,r.vRefund,null,r.tRefund,null,"g",1));
   if(r.poIn)rows.push(TR6("Прочие поступления",r.poIn,r.vPoIn,null,r.tPoIn,null,"g",1));
-  rows.push(SEP6("Итого поступлений",r.tot,r.vPjIn+r.vPr+r.vRefund+r.vPoIn,r.vVatTotalIn,r.tPjIn+r.tPr+r.tRefund+r.tPoIn,r.tVatTotalIn,"g"));
+  rows.push(SEP6("Итого поступлений",r.tot,r.vPjIn+r.vPr+r.vRefund+r.vPoIn,r.vVatTotalIn+r.vVatNonProjIn,r.tPjIn+r.tPr+r.tRefund+r.tPoIn,r.tVatTotalIn+r.tVatNonProjIn,"g"));
 
   rows.push(SEC("Расходы по проектам"));
   var hasPo=Object.keys(r.poP_v).length>0||Object.keys(r.poP_t).length>0;
@@ -423,7 +431,7 @@ function render(r,live){
     rows.push(SEP6("Нетто займы",r.skIn-r.skOut,r.vSkIn-r.vSkOut,null,r.tSkIn-r.tSkOut,null,r.skIn-r.skOut>0?"g":r.skIn-r.skOut<0?"r":""));
   }
 
-  rows.push(SEP6("ВСЕГО РАСХОДОВ",r.te+r.skOut-r.trNetto,null,r.vVatTotalOut,null,r.tVatTotalOut,""));
+  rows.push(SEP6("ВСЕГО РАСХОДОВ",r.te+r.skOut-r.trNetto,null,r.vVatTotalOut+r.vVatTransfer,null,r.tVatTotalOut+r.tVatTransfer,""));
   rows.push(SEP6(r.cOk?"Контрольная сумма":"Контрольная сумма ⚠",r.ctrl,null,null,null,null,r.cOk?"g":"r"));
 
   // ─── Свод НДС (справа) ──────────────────────────────────────────────────
@@ -431,14 +439,15 @@ function render(r,live){
   // vVatTotalOut = 3144 (outcome) → расходные строки → НДС подрядчикам → к возмещению
   // БАЛАНС = к уплате − к возмещению (>0 красный = платим; <0 зелёный = возмещение)
   var vatPayV=r.vVatTotalIn+r.vVatNonProjIn,vatPayT=r.tVatTotalIn+r.tVatNonProjIn;
-  var vatRecV=r.vVatTotalOut+r.vVatOffice+r.vVatTransfer,vatRecT=r.tVatTotalOut+r.tVatOffice+r.tVatTransfer;
+  // vVatOffice — подмножество vVatTotalOut (проекты 100/101), не прибавляем повторно
+  var vatRecV=r.vVatTotalOut+r.vVatTransfer,vatRecT=r.tVatTotalOut+r.tVatTransfer;
   var vatBalV=vatPayV-vatRecV,vatBalT=vatPayT-vatRecT;
   var vst=[];
   vst.push(VSPH());
   vst.push(VSPR("НДС проекты",r.vVatTotalIn,r.tVatTotalIn,false,""));
   vst.push(VSPR("НДС прочие поступления",r.vVatNonProjIn,r.tVatNonProjIn,false,""));
   vst.push(VSPRBAL("К уплате",vatPayV,vatPayT,true,"r"));
-  vst.push(VSPR("НДС проекты",r.vVatTotalOut,r.tVatTotalOut,false,""));
+  vst.push(VSPR("НДС проекты",r.vVatTotalOut-r.vVatOffice,r.tVatTotalOut-r.tVatOffice,false,""));
   vst.push(VSPR("НДС офисные",r.vVatOffice,r.tVatOffice,false,""));
   vst.push(VSPR("НДС трансф.",r.vVatTransfer,r.tVatTransfer,false,""));
   vst.push(VSPRBAL("К возмещению",vatRecV,vatRecT,true,"g"));
