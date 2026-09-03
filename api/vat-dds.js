@@ -219,8 +219,13 @@ function calc(txMonth,txAll,cats,plsData,corrData,rng){
   });
 
   // ─── НДС из transaction_pls ──────────────────────────────────────────────
+  // Множество ID транзакций-возвратов от покупателей (для маршрутизации НДС)
+  var refundTxSet={};
+  txMonth.forEach(function(tx){var cn=cMap[tx.category_id]||"";if(AC[cn]==="refund"&&tx.id)refundTxSet[tx.id]=1;});
+
   var vVatPiP={},tVatPiP={},vVatPoP={},tVatPoP={};
   var vVatNonProjIn=0,tVatNonProjIn=0;
+  var vVatRefundIn=0,tVatRefundIn=0;
   var vVatOffice=0,tVatOffice=0,vVatTransfer=0,tVatTransfer=0;
   var vVatTotalIn=0,tVatTotalIn=0,vVatTotalOut=0,tVatTotalOut=0;
 
@@ -234,6 +239,12 @@ function calc(txMonth,txAll,cats,plsData,corrData,rng){
     if(is3147){
       // НДС внутри поступлений → доходные строки (корректировка через outcome вычитается)
       var inc47=(_ddsNum(p.income)||0)-(_ddsNum(p.outcome)||0);if(!inc47)return;
+      // Возвраты от покупателей — НДС на строку Возвраты, без разбивки по проектам
+      if(p.reference_id&&refundTxSet[p.reference_id]){
+        if(p.org_id===1){vVatRefundIn+=inc47;vVatTotalIn+=inc47;}
+        else if(p.org_id===2){tVatRefundIn+=inc47;tVatTotalIn+=inc47;}
+        return;
+      }
       if(!pOk){if(p.org_id===1)vVatNonProjIn+=inc47;else if(p.org_id===2)tVatNonProjIn+=inc47;return;}
       if(p.org_id===1){vVatPiP[gp]=(vVatPiP[gp]||0)+inc47;vVatTotalIn+=inc47;}
       else if(p.org_id===2){tVatPiP[gp]=(tVatPiP[gp]||0)+inc47;tVatTotalIn+=inc47;}
@@ -299,6 +310,7 @@ function calc(txMonth,txAll,cats,plsData,corrData,rng){
     vSkIn:vSkIn,tSkIn:tSkIn,skIn:skIn,vSkOut:vSkOut,tSkOut:tSkOut,skOut:skOut,
     vVatPiP:vVatPiP,tVatPiP:tVatPiP,vVatPoP:vVatPoP,tVatPoP:tVatPoP,
     vVatNonProjIn:vVatNonProjIn,tVatNonProjIn:tVatNonProjIn,
+    vVatRefundIn:vVatRefundIn,tVatRefundIn:tVatRefundIn,
     vVatOffice:vVatOffice,tVatOffice:tVatOffice,vVatTransfer:vVatTransfer,tVatTransfer:tVatTransfer,
     vVatTotalIn:vVatTotalIn,tVatTotalIn:tVatTotalIn,vVatTotalOut:vVatTotalOut,tVatTotalOut:tVatTotalOut,
     vCorrPrev:vCorrPrev,tCorrPrev:tCorrPrev,vCorrCurr:vCorrCurr,tCorrCurr:tCorrCurr,
@@ -390,7 +402,7 @@ function render(r,live){
     rows.push(TR6("Поступления по проектам",r.pjIn,r.vPjIn,null,r.tPjIn,null,"g",1));
   }
   if(r.pr)rows.push(TR6("Процентные доходы",r.pr,r.vPr,null,r.tPr,null,"g",1));
-  if(r.refund)rows.push(TR6("Возвраты",r.refund,r.vRefund,null,r.tRefund,null,"g",1));
+  if(r.refund||r.vVatRefundIn||r.tVatRefundIn)rows.push(TR6("Возвраты",r.refund,r.vRefund,r.vVatRefundIn||null,r.tRefund,r.tVatRefundIn||null,"g",1));
   if(r.poIn)rows.push(TR6("Прочие поступления",r.poIn,r.vPoIn,null,r.tPoIn,null,"g",1));
   rows.push(SEP6("Итого поступлений",r.tot,r.vPjIn+r.vPr+r.vRefund+r.vPoIn,r.vVatTotalIn,r.tPjIn+r.tPr+r.tRefund+r.tPoIn,r.tVatTotalIn,"g"));
 
