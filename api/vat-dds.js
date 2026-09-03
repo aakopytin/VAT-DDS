@@ -65,6 +65,8 @@ details table td{font-size:10px;color:#555;padding:2px 4px}
 <body>
 <div id="filters" style="display:flex;gap:6px;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #e5e7eb">
 <select id="qs" style="font-size:11px;border:1px solid #d1d5db;border-radius:3px;padding:2px 6px;color:#374151;background:#fff;cursor:pointer"></select>
+<span style="font-size:11px;color:#9ca3af">на дату:</span>
+<input type="date" id="repDate" style="font-size:11px;border:1px solid #d1d5db;border-radius:3px;padding:2px 6px;color:#374151;background:#fff;cursor:pointer">
 </div>
 <div id="root" style="color:#9ca3af">ДДС — загрузка…</div>
 <script>
@@ -108,9 +110,15 @@ function getRange(){
   if(val){var pts=val.split(":");y=parseInt(pts[0],10);q=parseInt(pts[1],10);}
   var s0=[y+"-01-01",y+"-04-01",y+"-07-01",y+"-10-01"][q-1];
   var s1End=[y+"-03-31",y+"-06-30",y+"-09-30",y+"-12-31"][q-1];
-  var s1=s1End;
   var todayStr=new Date().toISOString().slice(0,10);
-  if(s1>todayStr)s1=todayStr;
+  var rd=document.getElementById("repDate");
+  var rdVal=rd?rd.value:"";
+  var s1;
+  if(rdVal&&rdVal>=s0&&rdVal<=s1End&&rdVal<=todayStr){
+    s1=rdVal;
+  } else {
+    s1=s1End<todayStr?s1End:todayStr;
+  }
   var d0=s0.slice(8)+"."+s0.slice(5,7)+"."+s0.slice(0,4);
   var d1=s1.slice(8)+"."+s1.slice(5,7)+"."+s1.slice(0,4);
   return{s0:s0,s1:s1,s1End:s1End,d0:d0,d1:d1,label:"К"+q+" "+y,ymd:s0.slice(0,7)};
@@ -537,7 +545,23 @@ function load(reset){
       qs.appendChild(o);
     }
   }
-  qs.addEventListener("change",function(){load(false);});
+
+  function updateDatePicker(){
+    var val=qs?qs.value:"";
+    var nw=new Date(),y2=nw.getFullYear(),q2=Math.ceil((nw.getMonth()+1)/3);
+    if(val){var pts=val.split(":");y2=parseInt(pts[0],10);q2=parseInt(pts[1],10);}
+    var s0=[y2+"-01-01",y2+"-04-01",y2+"-07-01",y2+"-10-01"][q2-1];
+    var s1End=[y2+"-03-31",y2+"-06-30",y2+"-09-30",y2+"-12-31"][q2-1];
+    var todayStr=new Date().toISOString().slice(0,10);
+    var maxDate=s1End<todayStr?s1End:todayStr;
+    var rd=document.getElementById("repDate");
+    if(rd){rd.min=s0;rd.max=maxDate;rd.value=maxDate;}
+  }
+
+  updateDatePicker();
+  qs.addEventListener("change",function(){updateDatePicker();load(false);});
+  var rd=document.getElementById("repDate");
+  if(rd)rd.addEventListener("change",function(){load(false);});
 })();
 
 load(false);
