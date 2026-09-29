@@ -230,16 +230,20 @@ function calc(txMonth,txAll,cats,plsData,corrData,rng,pmDateMap){
   var vVatTotalIn=0,tVatTotalIn=0,vVatTotalOut=0,tVatTotalOut=0;
 
   (plsData||[]).forEach(function(p){
-    // Для PLS, привязанных к plan_money, используем дату plan_money (period attribution),
-    // а не дату создания самой PLS-записи (booking date)
-    var effDate=(p.plan_money_id&&pmDateMap&&pmDateMap[p.plan_money_id])
-      ?pmDateMap[p.plan_money_id]:(p.date||'');
-    if(!effDate||effDate<rng.s0||effDate>rng.s1)return;
+    // Атрибуция периода: для PLS, привязанных к plan_money, используем дату plan_money
+    // (чтобы исключить записи текущего квартала, относящиеся к другим периодам).
+    // Сравниваем с s1End (конец квартала), а p.date — для фильтра «на дату» (as-of).
+    var pmDate=(p.plan_money_id&&pmDateMap&&pmDateMap[p.plan_money_id])||null;
+    var periodDate=pmDate||(p.date||'');
+    if(!periodDate||periodDate<rng.s0||periodDate>rng.s1End)return;
+    if(!p.date||p.date>rng.s1)return;
     var is3144=p.category_id===3144,is3147=p.category_id===3147;
     if(!is3144&&!is3147)return;
     var pid=p.project_id||0;
     var gp=(pid&&PG[pid])?PG[pid]:pid;
     var pOk=gp&&!!PN[gp];
+    // pid=27 — межкорпоративные РСХБ-трансферы; все остальные немаппированные → «Прочие»
+    var isTransferPid=(pid===27);
     if(is3147){
       // НДС внутри поступлений → доходные строки (корректировка через outcome вычитается)
       var inc47=(_ddsNum(p.income)||0)-(_ddsNum(p.outcome)||0);if(!inc47)return;
@@ -249,7 +253,14 @@ function calc(txMonth,txAll,cats,plsData,corrData,rng,pmDateMap){
         else if(p.org_id===2){tVatRefundIn+=inc47;tVatTotalIn+=inc47;}
         return;
       }
-      if(!pOk){if(p.org_id===1)vVatNonProjIn+=inc47;else if(p.org_id===2)tVatNonProjIn+=inc47;return;}
+      if(!pOk){
+        if(isTransferPid){if(p.org_id===1)vVatNonProjIn+=inc47;else if(p.org_id===2)tVatNonProjIn+=inc47;}
+        else{// Немаппированный проект → Прочие проекты (gp=101)
+          if(p.org_id===1){vVatPiP[101]=(vVatPiP[101]||0)+inc47;vVatTotalIn+=inc47;}
+          else if(p.org_id===2){tVatPiP[101]=(tVatPiP[101]||0)+inc47;tVatTotalIn+=inc47;}
+        }
+        return;
+      }
       if(p.org_id===1){vVatPiP[gp]=(vVatPiP[gp]||0)+inc47;vVatTotalIn+=inc47;}
       else if(p.org_id===2){tVatPiP[gp]=(tVatPiP[gp]||0)+inc47;tVatTotalIn+=inc47;}
     }
@@ -257,8 +268,14 @@ function calc(txMonth,txAll,cats,plsData,corrData,rng,pmDateMap){
       // НДС внутри платежей → расходные строки
       var out44=(_ddsNum(p.outcome)||0)-(_ddsNum(p.income)||0);if(!out44)return;
       if(!pOk){
-        // Без привязки к проекту → трансферы (межкорпоративные расчёты НДС)
-        if(p.org_id===1)vVatTransfer+=out44;else if(p.org_id===2)tVatTransfer+=out44;
+        if(isTransferPid){
+          // pid=27: межкорпоративные РСХБ-трансферы → transfer-bucket
+          if(p.org_id===1)vVatTransfer+=out44;else if(p.org_id===2)tVatTransfer+=out44;
+        } else {
+          // Немаппированный проект (pid=35 и др.) → Прочие проекты expense НДС
+          if(p.org_id===1){vVatPoP[101]=(vVatPoP[101]||0)+out44;vVatTotalOut+=out44;}
+          else if(p.org_id===2){tVatPoP[101]=(tVatPoP[101]||0)+out44;tVatTotalOut+=out44;}
+        }
         return;
       }
       if(p.org_id===1){
