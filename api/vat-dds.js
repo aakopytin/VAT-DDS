@@ -147,7 +147,7 @@ function loadAll(entity,extra){
   return next();
 }
 
-function calc(txMonth,txAll,cats,plsData,corrData,rng){
+function calc(txMonth,txAll,cats,plsData,corrData,rng,pmDateMap){
   var cMap={};
   cats.forEach(function(c){cMap[c.id]=c.name||"";});
 
@@ -230,7 +230,11 @@ function calc(txMonth,txAll,cats,plsData,corrData,rng){
   var vVatTotalIn=0,tVatTotalIn=0,vVatTotalOut=0,tVatTotalOut=0;
 
   (plsData||[]).forEach(function(p){
-    if(!p.date||p.date<rng.s0||p.date>rng.s1)return;
+    // Для PLS, привязанных к plan_money, используем дату plan_money (period attribution),
+    // а не дату создания самой PLS-записи (booking date)
+    var effDate=(p.plan_money_id&&pmDateMap&&pmDateMap[p.plan_money_id])
+      ?pmDateMap[p.plan_money_id]:(p.date||'');
+    if(!effDate||effDate<rng.s0||effDate>rng.s1)return;
     var is3144=p.category_id===3144,is3147=p.category_id===3147;
     if(!is3144&&!is3147)return;
     var pid=p.project_id||0;
@@ -522,13 +526,17 @@ function load(reset){
     loadAll("transaction"),
     loadAll("categories"),
     loadAll("transaction_pls",{"filter[category_id]":"3144,3147"}).catch(function(){return[];}),
-    loadAll("plan_money",{"filter[org_account_id]":"149"}).catch(function(){return[];})
+    loadAll("plan_money",{"filter[org_account_id]":"149"}).catch(function(){return[];}),
+    loadAll("plan_money",{}).catch(function(){return[];})
   ]).then(function(res){
-    var txAll=res[0],cats=res[1],pls=res[2],corr=res[3];
+    var txAll=res[0],cats=res[1],pls=res[2],corr=res[3],pmAll=res[4];
+    // Карта plan_money_id → plan_paid_date для корректной атрибуции периода PLS-записей
+    var pmDateMap={};
+    (pmAll||[]).forEach(function(pm){if(pm.id&&pm.plan_paid_date)pmDateMap[pm.id]=pm.plan_paid_date;});
     var rng=getRange();
     var txM=txAll.filter(function(tx){return tx.date&&tx.date>=rng.s0&&tx.date<=rng.s1;});
     if(txM.length){
-      var r=calc(txM,txAll,cats,pls,corr,rng);
+      var r=calc(txM,txAll,cats,pls,corr,rng,pmDateMap);
       el.innerHTML=render(r,true);
       renderPoDet(r.poDet);
     }else{
