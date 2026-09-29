@@ -79,9 +79,9 @@ var API_BASE="${esc(h)}"?"https://${esc(h)}":(location.origin||"");
 var VSIP={1:1,2:1,3:1,4:1,5:1,6:1,7:1,8:1,161:1,166:1,175:1,176:1,177:1,178:1};
 var TT={18:1,26:1};
 var OFF={24:1};
-var PN={1:"Кемерово",3:"Южно-Сахалинск",10:"Большое Болдино",25:"Южно-Сахалинск",13:"Барнаул",12:"Киров",23:"Сыктывкар",9:"Рузаевка",7:"Иволгинск",6:"Десногорск",102:"Голутвинский",100:"Центральный договор",101:"Прочие проекты",103:"Офисные"};
-var PO=[1,3,10,13,12,23,9,7,6,102,100,101];
-var PG={2:101,4:101,18:100,19:100,21:101,29:100,30:100,31:100,32:100,33:102,17:101,20:101,22:101,28:101,24:103,26:103};
+var PN={1:"Кемерово",3:"Южно-Сахалинск",10:"Большое Болдино",25:"Южно-Сахалинск",13:"Барнаул",12:"Киров",23:"Сыктывкар",9:"Рузаевка",7:"Иволгинск",6:"Десногорск",102:"Голутвинский",100:"Центральный договор",101:"Прочие проекты",103:"Офисные",104:"Внепроектные"};
+var PO=[1,3,10,13,12,23,9,7,6,102,100,101,104];
+var PG={2:101,4:101,18:100,19:100,21:101,29:100,30:100,31:100,32:100,33:102,17:101,20:101,22:101,28:101,24:103,26:103,35:104};
 var AC={
 "Перевод между счетами (поступление)":"tr","Перевод между счетами (списание)":"tr",
 "Получение кредита":"skIn","Выплата кредита":"skOut",
@@ -147,7 +147,7 @@ function loadAll(entity,extra){
   return next();
 }
 
-function calc(txMonth,txAll,cats,plsData,corrData,rng,pmDateMap){
+function calc(txMonth,txAll,cats,plsData,corrData,rng,pmDateMap,taxPmSet){
   var cMap={};
   cats.forEach(function(c){cMap[c.id]=c.name||"";});
 
@@ -284,6 +284,9 @@ function calc(txMonth,txAll,cats,plsData,corrData,rng,pmDateMap){
       // Исключаем физические платежи НДС в бюджет (ЕНП): plan_money_id=0 и совпадение
       // (дата, сумма) с налоговой транзакцией категории ntax (ВСИП и ТТ).
       if(!p.plan_money_id&&taxTxKey[(p.date||"")+":"+out44])return;
+      // Исключаем плановые НДС-платежи в бюджет: plan_money с category_id=3144
+      // (напр. «Налоги - август план», «Налоги - сентябрь план»).
+      if(p.plan_money_id&&taxPmSet&&taxPmSet[p.plan_money_id])return;
       if(!pOk){
         if(isTransferPid){
           // pid=27: межкорпоративные РСХБ-трансферы → transfer-bucket
@@ -566,11 +569,16 @@ function load(reset){
     var txAll=res[0],cats=res[1],pls=res[2],corr=res[3],pmAll=res[4];
     // Карта plan_money_id → plan_paid_date для корректной атрибуции периода PLS-записей
     var pmDateMap={};
-    (pmAll||[]).forEach(function(pm){if(pm.id&&pm.plan_paid_date)pmDateMap[pm.id]=pm.plan_paid_date;});
+    var taxPmSet={};
+    (pmAll||[]).forEach(function(pm){
+      if(pm.id&&pm.plan_paid_date)pmDateMap[pm.id]=pm.plan_paid_date;
+      // plan_money с category_id=3144 — плановые НДС-платежи в бюджет; PLS на них не вычет
+      if(pm.id&&pm.category_id===3144)taxPmSet[pm.id]=1;
+    });
     var rng=getRange();
     var txM=txAll.filter(function(tx){return tx.date&&tx.date>=rng.s0&&tx.date<=rng.s1;});
     if(txM.length){
-      var r=calc(txM,txAll,cats,pls,corr,rng,pmDateMap);
+      var r=calc(txM,txAll,cats,pls,corr,rng,pmDateMap,taxPmSet);
       el.innerHTML=render(r,true);
       renderPoDet(r.poDet);
     }else{
