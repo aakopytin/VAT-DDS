@@ -223,6 +223,20 @@ function calc(txMonth,txAll,cats,plsData,corrData,rng,pmDateMap){
   var refundTxSet={};
   txMonth.forEach(function(tx){var cn=cMap[tx.category_id]||"";if(AC[cn]==="refund"&&tx.id)refundTxSet[tx.id]=1;});
 
+  // Множество (дата:сумма) налоговых транзакций (ntax) — для исключения из PLS cat=3144
+  // физических платежей НДС в бюджет (ЕНП). Такая PLS-запись имеет plan_money_id=0
+  // и совпадает по (дата, сумма) с транзакцией категории «Налоги и взносы» / «Налог на прибыль».
+  var taxTxKey={};
+  txAll.forEach(function(tx){
+    var cn=cMap[tx.category_id]||"";
+    if(AC[cn]!=="ntax")return;
+    var aid=tx.org_account_id;
+    if(!VSIP[aid]&&!TT[aid])return;
+    var out=_ddsNum(tx.outcome)||0;
+    if(!out)return;
+    taxTxKey[(tx.date||"")+":"+out]=1;
+  });
+
   var vVatPiP={},tVatPiP={},vVatPoP={},tVatPoP={};
   var vVatNonProjIn=0,tVatNonProjIn=0;
   var vVatRefundIn=0,tVatRefundIn=0;
@@ -267,6 +281,9 @@ function calc(txMonth,txAll,cats,plsData,corrData,rng,pmDateMap){
     if(is3144){
       // НДС внутри платежей → расходные строки
       var out44=(_ddsNum(p.outcome)||0)-(_ddsNum(p.income)||0);if(!out44)return;
+      // Исключаем физические платежи НДС в бюджет (ЕНП): plan_money_id=0 и совпадение
+      // (дата, сумма) с налоговой транзакцией категории ntax (ВСИП и ТТ).
+      if(!p.plan_money_id&&taxTxKey[(p.date||"")+":"+out44])return;
       if(!pOk){
         if(isTransferPid){
           // pid=27: межкорпоративные РСХБ-трансферы → transfer-bucket
