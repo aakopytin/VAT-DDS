@@ -147,7 +147,7 @@ function loadAll(entity,extra){
   return next();
 }
 
-function calc(txMonth,txAll,cats,plsData,corrData,rng,pmDateMap,taxPmSet){
+function calc(txMonth,txAll,cats,plsData,corrData,rng,pmDateMap,taxPmSet,bankAccts){
   var cMap={};
   cats.forEach(function(c){cMap[c.id]=c.name||"";});
 
@@ -159,6 +159,14 @@ function calc(txMonth,txAll,cats,plsData,corrData,rng,pmDateMap,taxPmSet){
     if(tx.date<rng.s0){if(VSIP[aid])vSt+=inc-out;if(TT[aid])tSt+=inc-out;}
     if(tx.date<=rng.s1){if(VSIP[aid])vEnd+=inc-out;if(TT[aid])tEnd+=inc-out;}
   });
+  // Начальный остаток (fixed_balance из bank_account — не транзакция)
+  if(bankAccts){bankAccts.forEach(function(ba){
+    var fb=parseFloat(ba.fixed_balance)||0,fbd=ba.fixed_balance_date||'';
+    if(!fb||!fbd)return;
+    var baid=+ba.id;
+    if(VSIP[baid]){if(fbd<rng.s0)vSt+=fb;if(fbd<=rng.s1)vEnd+=fb;}
+    if(TT[baid]){if(fbd<rng.s0)tSt+=fb;if(fbd<=rng.s1)tEnd+=fb;}
+  });}
 
   var vPr=0,tPr=0,vPjIn=0,tPjIn=0,piP_v={},piP_t={};
   var vRefund=0,tRefund=0,vPoIn=0,tPoIn=0;
@@ -564,9 +572,10 @@ function load(reset){
     loadAll("categories"),
     loadAll("transaction_pls",{"filter[category_id]":"3144,3147"}).catch(function(){return[];}),
     loadAll("plan_money",{"filter[org_account_id]":"149"}).catch(function(){return[];}),
-    loadAll("plan_money",{}).catch(function(){return[];})
+    loadAll("plan_money",{}).catch(function(){return[];}),
+    loadAll("bank_account").catch(function(){return[];})
   ]).then(function(res){
-    var txAll=res[0],cats=res[1],pls=res[2],corr=res[3],pmAll=res[4];
+    var txAll=res[0],cats=res[1],pls=res[2],corr=res[3],pmAll=res[4],bankAccts=res[5];
     // Карта plan_money_id → plan_paid_date для корректной атрибуции периода PLS-записей
     var pmDateMap={};
     var taxPmSet={};
@@ -578,7 +587,7 @@ function load(reset){
     var rng=getRange();
     var txM=txAll.filter(function(tx){return tx.date&&tx.date>=rng.s0&&tx.date<=rng.s1;});
     if(txM.length){
-      var r=calc(txM,txAll,cats,pls,corr,rng,pmDateMap,taxPmSet);
+      var r=calc(txM,txAll,cats,pls,corr,rng,pmDateMap,taxPmSet,bankAccts);
       el.innerHTML=render(r,true);
       renderPoDet(r.poDet);
     }else{
