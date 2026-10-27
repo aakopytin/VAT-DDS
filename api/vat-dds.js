@@ -257,6 +257,9 @@ function calc(txMonth,txAll,cats,plsData,corrData,rng,pmDateMap,taxPmSet,bankAcc
     // Сравниваем с s1End (конец квартала), а p.date — для фильтра «на дату» (as-of).
     var pmDate=(p.plan_money_id&&pmDateMap&&pmDateMap[p.plan_money_id])||null;
     var periodDate=pmDate||(p.date||'');
+    // Как в Бюджет1 (plsPeriodDate): плановый платёж просрочен (дата плана — до начала квартала),
+    // а фактическая оплата (дата PLS) — в квартале → период = дата платежа.
+    if(pmDate&&pmDate<rng.s0&&p.date&&p.date>=rng.s0)periodDate=p.date;
     if(!periodDate||periodDate<rng.s0||periodDate>rng.s1End)return;
     if(!p.date||p.date>rng.s1)return;
     var is3144=p.category_id===3144,is3147=p.category_id===3147;
