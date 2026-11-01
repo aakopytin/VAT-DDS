@@ -127,11 +127,15 @@ function getRange(){
 var lk=function(ym){return"dds_"+ACCOUNT_ID+"_"+ym;};
 function clrF(ym){try{localStorage.removeItem(lk(ym));}catch(e){}}
 
+// Загрузка сущности «пачками» по 15 страниц Aspro за один запрос к /api/data (chunk=0,1,2…).
+// Ответы кешируются CDN на 2 минуты; _FORCE (кнопка ↻ / ⟳₀) — запрос в обход кеша.
+var _FORCE="";
 function loadAll(entity,extra){
-  var all=[],page=1;
+  var all=[],chunk=0;
   function next(){
     var p=new URLSearchParams(extra||{});
-    p.set('entity',entity);p.set('limit','100');p.set('page',String(page));
+    p.set('entity',entity);p.set('chunk',String(chunk));
+    if(_FORCE)p.set('_t',_FORCE);
     return fetch(API_BASE+'/api/data?'+p.toString()).then(function(r){
       if(!r.ok)throw new Error('HTTP '+r.status);
       return r.json();
@@ -141,7 +145,7 @@ function loadAll(entity,extra){
       var total=(d.response&&d.response.total)||0;
       all=all.concat(items);
       if(all.length>=total||items.length===0)return all;
-      page++;return next();
+      chunk++;return next();
     });
   }
   return next();
@@ -663,12 +667,13 @@ function load(reset){
     loadAll("transaction"),
     loadAll("categories"),
     loadAll("transaction_pls",{"filter[category_id]":"3144,3147"}).catch(function(){return[];}),
-    loadAll("plan_money",{"filter[org_account_id]":"149"}).catch(function(){return[];}),
+    Promise.resolve(null),   // корректировки НДС: тот же список plan_money (фильтр сервер не применял) — см. ниже
     loadAll("plan_money",{}).catch(function(){return[];}),
     loadAll("bank_account").catch(function(){return[];}),
     (crmCache?Promise.resolve(crmCache):loadAll("crm_account").then(function(a){crmCache=a;return a;}).catch(function(){return[];}))
   ]).then(function(res){
-    var txAll=res[0],cats=res[1],pls=res[2],corr=res[3],pmAll=res[4],bankAccts=res[5];
+    var txAll=res[0],cats=res[1],pls=res[2],corr=res[4],pmAll=res[4],bankAccts=res[5];
+    _lastLoad=Date.now();
     // Карта plan_money_id → plan_paid_date для корректной атрибуции периода PLS-записей
     var pmDateMap={};
     var taxPmSet={};
@@ -686,8 +691,9 @@ function load(reset){
     }else{
       el.innerHTML="<div style='padding:12px;font-size:11px;color:#666'>Нет данных за "+rng.label+" ("+rng.s0+" — "+rng.s1+")</div>";
     }
-    var b=document.getElementById("btn");if(b)b.onclick=function(){load(false);};
-    var rb=document.getElementById("rst");if(rb)rb.onclick=function(){load(true);};
+    _FORCE="";
+    var b=document.getElementById("btn");if(b)b.onclick=function(){_FORCE=String(Date.now());load(false);};
+    var rb=document.getElementById("rst");if(rb)rb.onclick=function(){_FORCE=String(Date.now());load(true);};
   }).catch(function(e){
     el.innerHTML="<div style='padding:12px;color:#dc2626'>Ошибка: "+e+"</div>";
     console.error("[DDS]",e);
@@ -729,7 +735,12 @@ function load(reset){
 })();
 
 load(false);
-setInterval(function(){load(false);},5*60*1000);
+// Автообновление каждые 5 минут отключено (нагрузка на Vercel). Обновление: при открытии, кнопкой ↻,
+// а также при возврате на вкладку, если данным больше 30 минут.
+var _lastLoad=Date.now();
+document.addEventListener("visibilitychange",function(){
+  if(document.visibilityState==="visible"&&Date.now()-_lastLoad>30*60*1000){_FORCE=String(Date.now());load(false);}
+});
 })();
 </script>
 </body>
