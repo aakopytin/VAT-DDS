@@ -1,4 +1,4 @@
-// Proxy to Aspro Cloud API — server-side pagination
+// Proxy to Aspro Cloud API — server-side pagination, повторы при сбоях соединения с Аспро
 // Env vars: ASPRO_API_KEY, ASPRO_DOMAIN
 // GET: entity/page/limit from query params; returns raw Aspro response (d.response.items)
 //   GET ...&chunk=N — «пачка»: сервер сам загружает до 15 страниц Aspro (до 1500 записей) параллельно
@@ -30,17 +30,32 @@ function readJsonBody(req) {
   });
 }
 
-function httpsGet(url) {
+// Один запрос к Аспро с таймаутом (не ждём системные ~15 с на зависшее соединение)
+function httpsGetOnce(url, timeoutMs) {
   return new Promise(function(resolve, reject) {
-    https.get(url, function(resp) {
+    const req = https.get(url, function(resp) {
       let data = '';
       resp.on('data', function(chunk) { data += chunk; });
       resp.on('end', function() {
         try { resolve(JSON.parse(data)); }
-        catch(e) { reject(new Error('JSON parse: ' + e.message)); }
+        catch(e) { reject(new Error('JSON parse (HTTP ' + resp.statusCode + '): ' + e.message)); }
       });
-    }).on('error', reject);
+    });
+    req.setTimeout(timeoutMs, function() { req.destroy(new Error('timeout ' + timeoutMs + ' ms')); });
+    req.on('error', reject);
   });
+}
+// Запрос с повторами: сбои соединения с Аспро (ETIMEDOUT, ECONNRESET, таймаут, не-JSON ответ)
+// повторяются до 3 раз с паузой 0,7 и 1,5 с — виджет получает 502, только если все попытки неудачны.
+const RETRY_DELAYS = [0, 700, 1500];
+async function httpsGet(url) {
+  let lastErr;
+  for (let i = 0; i < RETRY_DELAYS.length; i++) {
+    if (RETRY_DELAYS[i]) await new Promise(function(r) { setTimeout(r, RETRY_DELAYS[i]); });
+    try { return await httpsGetOnce(url, 8000); }
+    catch (e) { lastErr = e; }
+  }
+  throw lastErr;
 }
 
 function itemsOf(data) {
