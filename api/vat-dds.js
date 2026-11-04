@@ -132,19 +132,26 @@ function clrF(ym){try{localStorage.removeItem(lk(ym));}catch(e){}}
 var _FORCE="";
 function loadAll(entity,extra){
   var all=[],chunk=0;
-  function next(){
+  function getChunk(attempt){
     var p=new URLSearchParams(extra||{});
     p.set('entity',entity);p.set('chunk',String(chunk));
     if(_FORCE)p.set('_t',_FORCE);
     return fetch(API_BASE+'/api/data?'+p.toString()).then(function(r){
-      if(!r.ok)throw new Error('HTTP '+r.status);
+      // Сбой сервера/Аспро (502/504) — повтор пачки до 2 раз с паузой 1,5 с
+      if(r.status>=500&&attempt<2)return new Promise(function(res){setTimeout(res,1500);}).then(function(){return getChunk(attempt+1);});
+      if(!r.ok)throw new Error(entity+' HTTP '+r.status);
       return r.json();
-    }).then(function(d){
-      if(d.error)throw new Error(JSON.stringify(d.error));
+    });
+  }
+  function next(){
+    return getChunk(0).then(function(d){
+      if(d.error)throw new Error(entity+': '+JSON.stringify(d.error));
       var items=(d.response&&d.response.items)||[];
       var total=(d.response&&d.response.total)||0;
       all=all.concat(items);
-      if(all.length>=total||items.length===0)return all;
+      if(all.length>=total)return all;
+      // Пачки кончились, а записей меньше total — данные неполные: ошибка вместо «тихо» усечённого отчёта
+      if(items.length===0)throw new Error(entity+': загружено '+all.length+' из '+total+' записей — обновите ↻');
       chunk++;return next();
     });
   }
